@@ -2,7 +2,8 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#0056b3">
 <title>Keuangan Wirausaha KIR TEI</title>
 <style>
 :root{--biru:#0056b3;--hijau:#157347;--merah:#c62828;--bg:#f4f6f9;--garis:#dde2e8;--teks:#1f2933;--abu:#667085}
@@ -129,6 +130,42 @@ input,select{width:100%;padding:12px;font:inherit;border:1px solid #b9c2cc;borde
 .ttd .nama{margin-top:64px;font-weight:700;text-decoration:underline;min-height:1.2em}
 .cetak-info{font-size:11px;color:#555;margin-top:14px}
 
+/* ===== Android / layar sempit ===== */
+html{-webkit-text-size-adjust:100%}
+body{padding:12px 12px calc(96px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent}
+button,input,select,label{touch-action:manipulation}
+input,select{min-height:48px}
+.btn{min-height:52px}
+/* Tombol catat menempel di bawah layar agar mudah dijangkau ibu jari */
+.aksi{position:fixed;left:0;right:0;bottom:0;z-index:20;max-width:640px;margin:0 auto;gap:10px;
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(244,246,249,.97);
+  border-top:1px solid var(--garis);box-shadow:0 -4px 14px rgba(0,0,0,.08)}
+.aksi .btn{padding:14px 8px;font-size:17px}
+#toast{bottom:calc(100px + env(safe-area-inset-bottom))}
+.layar{overscroll-behavior:contain;padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
+.kotak{margin:auto}
+.stickyBtn{position:sticky;bottom:-22px;background:#fff;padding:10px 0 0;margin-top:4px;z-index:2}
+.item{align-items:flex-start}
+.item .kiri{align-items:flex-start}
+.thumb{width:52px;height:52px}
+.item .jml{font-size:15px}
+.item .sub{overflow-wrap:anywhere}
+.hapus{padding:8px 0;min-height:36px}
+.batal{padding:8px 12px}
+.ringkas b{overflow-wrap:anywhere}
+#laporanDoc{-webkit-overflow-scrolling:touch}
+@media(max-width:420px){
+  .cari{grid-template-columns:1fr}
+  .ringkas{gap:6px}
+  .ringkas b{font-size:13px}
+  .saldo .angka{font-size:29px}
+  .bulan-head{flex-wrap:wrap}
+  .bulan-head input{width:100%}
+  .baris2{grid-template-columns:1fr}
+  .galeri{grid-template-columns:1fr}
+  .pin input{width:52px}
+}
+
 @page{size:A4;margin:14mm}
 @media print{
   body{background:#fff;padding:0;font-size:12px}
@@ -208,6 +245,11 @@ input,select{width:100%;padding:12px;font:inherit;border:1px solid #b9c2cc;borde
         <input type="text" id="uraian" placeholder="Untuk apa? (boleh dikosongkan)">
       </div>
       <div class="fg">
+        <label for="pj">Penanggung jawab <span class="merah">*wajib</span></label>
+        <input type="text" id="pj" required list="daftarPj" autocomplete="off" placeholder="Nama yang bertanggung jawab">
+        <datalist id="daftarPj"></datalist>
+      </div>
+      <div class="fg">
         <label for="tanggal">Tanggal</label>
         <input type="date" id="tanggal" required>
       </div>
@@ -225,8 +267,8 @@ input,select{width:100%;padding:12px;font:inherit;border:1px solid #b9c2cc;borde
         </div>
         <p class="kecil">Foto dikecilkan otomatis agar hemat kuota.</p>
       </div>
-      <button type="submit" class="btn" id="btnSubmit">Simpan</button>
-      <button type="button" class="btn abu" onclick="tutupForm()">Batal</button>
+      <div class="stickyBtn"><button type="submit" class="btn" id="btnSubmit">Simpan</button>
+      <button type="button" class="btn abu" onclick="tutupForm()">Batal</button></div>
     </form>
   </div>
 </div>
@@ -323,13 +365,13 @@ input,select{width:100%;padding:12px;font:inherit;border:1px solid #b9c2cc;borde
     <div id="daftar"><div class="kosong">Memuat data…</div></div>
   </div>
 
-  <div class="foot">Wirausaha KIR TEI · v3.0</div>
+  <div class="foot">Wirausaha KIR TEI · v3.1</div>
 </div>
 
 <div id="toast" class="hidden"></div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzZV7cezuIMDd4My-6w5gRVS8GsWeMUXlL2oc_iofVlJTnbWW38pFgFwCx9dbbzV37g7w/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwOtH0MSbkyZLIcQaLlnndjvjhOq9AXU-ncUHrnKgOSJCV6OHZ2fyME7aQzFg88gvqt6A/exec";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -403,6 +445,11 @@ const formatJam = (j) => {
   return m ? m[1].padStart(2,'0') + ':' + m[2] : '';
 };
 const labelKategori = (k) => k === 'Dan Lain-Lain' ? 'Lain-lain' : k;
+const namaPj = (i) => String(i.penanggungjawab || i.pj || '').trim();
+const isiDaftarPj = () => {
+  const s = new Set(dataKeuangan.map(namaPj).filter(Boolean));
+  $('daftarPj').innerHTML = [...s].map(n => `<option value="${esc(n)}">`).join('');
+};
 
 // Alamat gambar: bisa data URL (baru difoto), link, atau ID file Google Drive
 const fotoSrc = (f) => {
@@ -467,7 +514,7 @@ const updateUI = () => {
   const q = searchQuery.toLowerCase();
   const tampil = diBulan.filter(i =>
     (filterKategori === '' || i.transaksi === filterKategori) &&
-    (formatTanggal(i.tanggal).toLowerCase().includes(q) || (i.uraian && i.uraian.toLowerCase().includes(q)) || (i.jumlah && i.jumlah.toString().includes(q)))
+    (formatTanggal(i.tanggal).toLowerCase().includes(q) || (i.uraian && i.uraian.toLowerCase().includes(q)) || namaPj(i).toLowerCase().includes(q) || (i.jumlah && i.jumlah.toString().includes(q)))
   );
 
   if (!tampil.length) { $('daftar').innerHTML = '<div class="kosong">Belum ada transaksi.</div>'; return; }
@@ -483,7 +530,7 @@ const updateUI = () => {
     return `<div class="item ${i.pendingDelete ? 'tunda' : ''}">
       <div class="kiri">${thumb}
         <div class="info"><div class="ur">${esc(i.uraian || labelKategori(i.transaksi))}</div>
-        <div class="sub">${esc(labelKategori(i.transaksi))} · ${formatTanggal(i.tanggal)}${formatJam(i.jam) ? ' · ' + formatJam(i.jam) : ''}</div></div>
+        <div class="sub">${esc(labelKategori(i.transaksi))} · ${formatTanggal(i.tanggal)}${formatJam(i.jam) ? ' · ' + formatJam(i.jam) : ''}</div>${namaPj(i) ? `<div class="sub">👤 ${esc(namaPj(i))}</div>` : ''}</div>
       </div>
       <div class="kanan"><div class="jml ${masukJenis ? 'hijau' : 'merah'}">${masukJenis ? '+' : '−'} ${formatRupiah(i.jumlah)}</div>${tombol}</div>
     </div>`;
@@ -556,6 +603,8 @@ const bukaForm = (jenis) => {
   $('formTransaksi').reset();
   resetFoto();
   $('tanggal').value = hariIni();
+  isiDaftarPj();
+  try { $('pj').value = localStorage.getItem('lastPj') || ''; } catch (x) {}
   $('formScreen').classList.remove('hidden');
   setTimeout(() => $('jumlah').focus(), 100);
 };
@@ -571,6 +620,9 @@ $('formTransaksi').addEventListener('submit', async function (e) {
   e.preventDefault();
   if (!parseInt($('jumlah').value.replace(/\D/g, ''), 10)) { toast('Isi jumlah lebih dari 0.'); return; }
   if (!fotoData) { toast('Foto bukti wajib diisi.'); return; }
+  const pj = $('pj').value.trim();
+  if (!pj) { toast('Isi nama penanggung jawab.'); $('pj').focus(); return; }
+  try { localStorage.setItem('lastPj', pj); } catch (x) {}
   const btn = $('btnSubmit');
   btn.disabled = true; btn.textContent = 'Menyimpan…';
   const data = {
@@ -579,6 +631,7 @@ $('formTransaksi').addEventListener('submit', async function (e) {
     jam: jamSekarang(),
     transaksi: $('transaksi').value,
     uraian: $('uraian').value,
+    penanggungjawab: pj,
     jenis: jenisForm,
     jumlah: parseInt($('jumlah').value.replace(/\D/g, ''), 10),
     pendingDelete: false
@@ -726,7 +779,7 @@ const renderLaporan = () => {
     return `<tr>
       <td class="c">${n + 1}</td>
       <td>${tglPendek(i.tanggal)}</td>
-      <td>${esc(i.uraian || labelKategori(i.transaksi))}${i.foto ? ' <span class="lamp">(foto no. ' + (n + 1) + ')</span>' : ''}</td>
+      <td>${esc(i.uraian || labelKategori(i.transaksi))}${i.foto ? ' <span class="lamp">(foto no. ' + (n + 1) + ')</span>' : ''}${namaPj(i) ? '<br><span class="lamp">PJ: ' + esc(namaPj(i)) + '</span>' : ''}</td>
       <td>${esc(labelKategori(i.transaksi))}</td>
       <td class="ang">${m ? rp(jml(i)) : ''}</td>
       <td class="ang">${k ? rp(jml(i)) : ''}</td>
@@ -744,7 +797,7 @@ const renderLaporan = () => {
     <h4 style="break-before:page;page-break-before:always">Lampiran Foto Bukti</h4>
     <div class="galeri">${berFoto.map(x => `<figure>
       <img src="${esc(fotoSrc(x.i.foto))}" alt="Bukti no. ${x.no}">
-      <figcaption><b>No. ${x.no}</b> · ${tglPendek(x.i.tanggal)} · ${x.i.jenis === 'PEMASUKAN' ? 'Masuk' : 'Keluar'} ${rp(jml(x.i))}<br>${esc(x.i.uraian || labelKategori(x.i.transaksi))}</figcaption>
+      <figcaption><b>No. ${x.no}</b> · ${tglPendek(x.i.tanggal)} · ${x.i.jenis === 'PEMASUKAN' ? 'Masuk' : 'Keluar'} ${rp(jml(x.i))}<br>${esc(x.i.uraian || labelKategori(x.i.transaksi))}${namaPj(x.i) ? '<br>PJ: ' + esc(namaPj(x.i)) : ''}</figcaption>
     </figure>`).join('')}</div>` : '';
 
   const tanpa = baris.length - berFoto.length;
@@ -763,6 +816,18 @@ const renderLaporan = () => {
 
     ${katRows ? `<h4>Rekap per Kategori</h4>
     <table class="tb" style="max-width:520px"><thead><tr><th>Kategori</th><th>Masuk</th><th>Keluar</th></tr></thead><tbody>${katRows}</tbody></table>` : ''}
+
+    ${(() => {
+      const p = {};
+      baris.forEach(i => {
+        const nm = namaPj(i) || '(tanpa nama)';
+        p[nm] = p[nm] || { m: 0, k: 0 };
+        if (i.jenis === 'PEMASUKAN') p[nm].m += jml(i); else if (i.jenis === 'PENGELUARAN') p[nm].k += jml(i);
+      });
+      const ks = Object.keys(p);
+      return ks.length ? `<h4>Rekap per Penanggung Jawab</h4>
+      <table class="tb" style="max-width:520px"><thead><tr><th>Penanggung Jawab</th><th>Masuk</th><th>Keluar</th></tr></thead><tbody>${ks.map(nm => `<tr><td>${esc(nm)}</td><td class="ang">${p[nm].m ? rp(p[nm].m) : '-'}</td><td class="ang">${p[nm].k ? rp(p[nm].k) : '-'}</td></tr>`).join('')}</tbody></table>` : '';
+    })()}
 
     <h4>Rincian Transaksi</h4>
     <table class="tb">
@@ -799,6 +864,13 @@ $('btnCetak').addEventListener('click', async () => {
     ]);
   }
   window.print();
+});
+
+// Android: pastikan kolom yang diketik tidak tertutup keyboard
+document.addEventListener('focusin', (e) => {
+  if (e.target.closest && e.target.closest('.kotak') && /INPUT|SELECT/.test(e.target.tagName)) {
+    setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300);
+  }
 });
 
 if (sessionStorage.getItem('isLoggedIn') === 'true') tampilkanAplikasi();
