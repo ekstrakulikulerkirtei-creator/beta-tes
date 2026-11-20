@@ -12,12 +12,13 @@ body{margin:0;padding:16px;background:var(--bg);color:var(--teks);font-family:'S
 .wrap{max-width:640px;margin:auto}
 .hidden{display:none!important}
 button{font:inherit;cursor:pointer}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #8ab8ee;outline-offset:2px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #8ab8ee;outline-offset:2px}
 
 /* Kartu & umum */
 .card{background:#fff;border:1px solid var(--garis);border-radius:12px;padding:16px;margin-bottom:14px}
 label{display:block;font-weight:600;margin:0 0 6px}
-input,select{width:100%;padding:12px;font:inherit;border:1px solid #b9c2cc;border-radius:8px;background:#fff}
+input,select,textarea{width:100%;padding:12px;font:inherit;border:1px solid #b9c2cc;border-radius:8px;background:#fff}
+textarea{min-height:84px;resize:vertical}
 .btn{display:block;width:100%;padding:14px;border:0;border-radius:10px;font-weight:700;color:#fff;background:var(--biru)}
 .btn.abu{background:#e9edf2;color:var(--teks)}
 .btn.lap{background:#fff;color:var(--biru);border:2px solid var(--biru);margin-bottom:14px}
@@ -81,6 +82,7 @@ input,select{width:100%;padding:12px;font:inherit;border:1px solid #b9c2cc;borde
 .kotak .btn+.btn{margin-top:10px}
 .baris2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fg{margin-bottom:14px}
+.dataHapus{background:#fdecea;border:1px solid #f5c2c0;border-radius:8px;padding:10px 12px;margin:0 0 14px;font-size:14px;overflow-wrap:anywhere}
 
 /* Foto di form */
 .fotoBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -133,7 +135,7 @@ input,select{width:100%;padding:12px;font:inherit;border:1px solid #b9c2cc;borde
 /* ===== Android / layar sempit ===== */
 html{-webkit-text-size-adjust:100%}
 body{padding:12px 12px calc(96px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent}
-button,input,select,label{touch-action:manipulation}
+button,input,select,textarea,label{touch-action:manipulation}
 input,select{min-height:48px}
 .btn{min-height:52px}
 /* Tombol catat menempel di bawah layar agar mudah dijangkau ibu jari */
@@ -201,12 +203,18 @@ input,select{min-height:48px}
   </div>
 </div>
 
-<!-- PIN HAPUS -->
+<!-- PIN HAPUS + ALASAN -->
 <div id="deleteScreen" class="layar hidden">
   <div class="kotak">
-    <h2>PIN untuk menghapus</h2>
-    <p class="ket">Masukkan 4 angka PIN hapus.</p>
+    <h2>Hapus data</h2>
+    <p class="ket">Data yang akan dihapus:</p>
+    <div class="dataHapus" id="infoHapus"></div>
     <form id="formDelete">
+      <div class="fg">
+        <label for="alasanHapus">Alasan menghapus <span class="merah">*wajib</span></label>
+        <textarea id="alasanHapus" required minlength="3" maxlength="300" placeholder="Contoh: salah input nominal"></textarea>
+      </div>
+      <label>PIN hapus (4 angka)</label>
       <div class="pin">
         <input type="password" class="del-pin" maxlength="1" required inputmode="numeric" aria-label="PIN hapus angka 1">
         <input type="password" class="del-pin" maxlength="1" required inputmode="numeric" aria-label="PIN hapus angka 2">
@@ -365,21 +373,42 @@ input,select{min-height:48px}
     <div id="daftar"><div class="kosong">Memuat data…</div></div>
   </div>
 
-  <div class="foot">Wirausaha KIR TEI · v3.1</div>
+  <div class="foot">Wirausaha KIR TEI · v3.2</div>
 </div>
 
 <div id="toast" class="hidden"></div>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzZV7cezuIMDd4My-6w5gRVS8GsWeMUXlL2oc_iofVlJTnbWW38pFgFwCx9dbbzV37g7w/exec";
+const WAKTU_HAPUS = 10; // detik menunggu sebelum data benar-benar dihapus
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const postJSON = (data) => fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(data) });
+
+// Kirim ke server. Selalu mengembalikan objek JSON, atau melempar error dengan pesan yang jelas.
+// (Versi lama menganggap "berhasil" walau server membalas error, sehingga data tampak tersimpan padahal tidak.)
+const kirimJSON = async (data, batas = 90000) => {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), batas);
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(data),
+      signal: ctl.signal
+    });
+    const teks = await res.text();
+    try { return JSON.parse(teks); }
+    catch (x) { throw new Error('Balasan server tidak valid. Pastikan kode.gs sudah di-deploy ulang sebagai "Versi baru" dan izin Drive sudah diberikan.'); }
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('Koneksi terlalu lambat. Periksa riwayat dulu, lalu coba lagi.');
+    throw err;
+  } finally { clearTimeout(timer); }
+};
 
 const toast = (pesan) => {
   const t = $('toast'); t.textContent = pesan; t.classList.remove('hidden');
-  clearTimeout(toast.w); toast.w = setTimeout(() => t.classList.add('hidden'), 3200);
+  clearTimeout(toast.w); toast.w = setTimeout(() => t.classList.add('hidden'), 5000);
 };
 
 // Kotak PIN: pindah otomatis ke kotak berikutnya
@@ -404,8 +433,7 @@ $('formLogin').addEventListener('submit', async (e) => {
   if (pin.length < 4) { err.textContent = 'Isi 4 angka PIN.'; err.style.display = 'block'; return; }
   btn.disabled = true; btn.textContent = 'Memeriksa…'; err.style.display = 'none';
   try {
-    const res = await postJSON({ action:'login', password:pin });
-    const hasil = await res.json();
+    const hasil = await kirimJSON({ action:'login', password:pin }, 30000);
     if (hasil.status === 'success') { sessionStorage.setItem('isLoggedIn','true'); tampilkanAplikasi(); }
     else { err.textContent = 'PIN salah. Coba lagi.'; err.style.display = 'block'; }
   } catch (x) { err.textContent = 'Tidak bisa terhubung. Periksa internet Anda.'; err.style.display = 'block'; }
@@ -419,7 +447,7 @@ const logout = () => { sessionStorage.removeItem('isLoggedIn'); location.reload(
 let dataKeuangan = [];
 const hariIni = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
 let filterBulan = hariIni().slice(0, 7);
-let filterKategori = '', searchQuery = '', itemHapusAktif = null, jenisForm = '';
+let filterKategori = '', searchQuery = '', itemHapusAktif = null, jenisForm = '', idForm = '';
 $('filterBulan').value = filterBulan;
 
 const formatRupiah = (n) => new Intl.NumberFormat('id-ID', { style:'currency', currency:'IDR', minimumFractionDigits:0 }).format(n);
@@ -465,7 +493,9 @@ const fotoSrc = (f) => {
 const muatDataOnline = async () => {
   try {
     const res = await fetch(API_URL);
-    dataKeuangan = await res.json();
+    const hasil = await res.json();
+    // Pertahankan data yang sedang menunggu dihapus (timer berjalan) saat memuat ulang
+    dataKeuangan = Array.isArray(hasil) ? hasil : [];
     updateUI();
   } catch (err) {
     $('daftar').innerHTML = '<div class="kosong merah">Gagal memuat data. Periksa internet lalu muat ulang halaman.</div>';
@@ -514,7 +544,7 @@ const updateUI = () => {
   const q = searchQuery.toLowerCase();
   const tampil = diBulan.filter(i =>
     (filterKategori === '' || i.transaksi === filterKategori) &&
-    (formatTanggal(i.tanggal).toLowerCase().includes(q) || (i.uraian && i.uraian.toLowerCase().includes(q)) || namaPj(i).toLowerCase().includes(q) || (i.jumlah && i.jumlah.toString().includes(q)))
+    (formatTanggal(i.tanggal).toLowerCase().includes(q) || (i.uraian && String(i.uraian).toLowerCase().includes(q)) || namaPj(i).toLowerCase().includes(q) || (i.jumlah && i.jumlah.toString().includes(q)))
   );
 
   if (!tampil.length) { $('daftar').innerHTML = '<div class="kosong">Belum ada transaksi.</div>'; return; }
@@ -596,6 +626,9 @@ $('fotoScreen').addEventListener('click', e => { if (e.target === $('fotoScreen'
 // ================== TAMBAH TRANSAKSI ==================
 const bukaForm = (jenis) => {
   jenisForm = jenis;
+  // id dibuat sekali per formulir: kalau pengguna menekan Simpan lagi setelah sinyal putus,
+  // server mengenali id yang sama dan tidak menyimpan data dobel.
+  idForm = '_' + Math.random().toString(36).slice(2, 11);
   const masuk = jenis === 'PEMASUKAN';
   $('judulForm').textContent = masuk ? 'Catat uang masuk' : 'Catat uang keluar';
   $('ketForm').textContent = masuk ? 'Uang yang diterima kas.' : 'Uang yang dipakai dari kas.';
@@ -618,77 +651,87 @@ $('jumlah').addEventListener('input', (e) => {
 
 $('formTransaksi').addEventListener('submit', async function (e) {
   e.preventDefault();
-  if (!parseInt($('jumlah').value.replace(/\D/g, ''), 10)) { toast('Isi jumlah lebih dari 0.'); return; }
+  const jumlah = parseInt($('jumlah').value.replace(/\D/g, ''), 10);
+  if (!jumlah) { toast('Isi jumlah lebih dari 0.'); return; }
+  if (!$('transaksi').value) { toast('Pilih kategori.'); return; }
   if (!fotoData) { toast('Foto bukti wajib diisi.'); return; }
   const pj = $('pj').value.trim();
   if (!pj) { toast('Isi nama penanggung jawab.'); $('pj').focus(); return; }
   try { localStorage.setItem('lastPj', pj); } catch (x) {}
   const btn = $('btnSubmit');
-  btn.disabled = true; btn.textContent = 'Menyimpan…';
+  btn.disabled = true; btn.textContent = 'Menyimpan… (tunggu, jangan ditutup)';
   const data = {
-    id: '_' + Math.random().toString(36).substr(2, 9),
+    id: idForm,
     tanggal: $('tanggal').value,
     jam: jamSekarang(),
     transaksi: $('transaksi').value,
-    uraian: $('uraian').value,
+    uraian: $('uraian').value.trim(),
     penanggungjawab: pj,
     jenis: jenisForm,
-    jumlah: parseInt($('jumlah').value.replace(/\D/g, ''), 10),
+    jumlah: jumlah,
     pendingDelete: false
   };
   const kirim = { action: 'add', ...data, fotoData: fotoData };
   const lokal = { ...data, foto: fotoData };
-  const adaFoto = !!fotoData;
   try {
-    const res = await postJSON(kirim);
-    let h = {}; try { h = await res.json(); } catch (x) {}
-    if (h.status === 'error') { toast(h.message || 'Gagal menyimpan. Coba lagi.'); return; }
-    if (adaFoto && h.fotoId) lokal.foto = h.fotoId;
-    dataKeuangan.push(lokal);
+    const h = await kirimJSON(kirim);
+    if (h.status !== 'success') { toast(h.message || 'Gagal menyimpan. Coba lagi.'); return; }
+    if (h.fotoId) lokal.foto = h.fotoId;
+    if (!dataKeuangan.some(x => String(x.id) === String(lokal.id))) dataKeuangan.push(lokal);
     const bulanBaru = lokal.tanggal.slice(0, 7);
     if (filterBulan !== '' && filterBulan !== bulanBaru) { filterBulan = bulanBaru; $('filterBulan').value = bulanBaru; }
     updateUI();
     tutupForm();
-    toast(adaFoto && !h.fotoId ? 'Tersimpan, tetapi foto belum tersimpan di server (Apps Script belum diperbarui).' : 'Tersimpan ✓');
-  } catch (err) { toast('Gagal menyimpan. Periksa internet.'); }
-  finally { btn.disabled = false; btn.textContent = 'Simpan'; }
+    toast('Tersimpan ✓');
+  } catch (err) {
+    toast(err.message || 'Gagal menyimpan. Periksa internet.');
+  } finally { btn.disabled = false; btn.textContent = 'Simpan'; }
 });
 
 // ================== HAPUS ==================
 const konfirmasiHapus = (id) => {
   if (!id || id === 'undefined') { alert('Data ini ditambahkan manual dari Sheet, jadi tidak bisa dihapus di sini.'); return; }
+  const item = dataKeuangan.find(x => String(x.id) === String(id));
+  if (!item) return;
   itemHapusAktif = id;
+  $('infoHapus').innerHTML =
+    `<b>${esc(item.uraian || labelKategori(item.transaksi))}</b><br>` +
+    `${esc(labelKategori(item.transaksi))} · ${formatTanggal(item.tanggal)}<br>` +
+    `${item.jenis === 'PEMASUKAN' ? 'Masuk' : 'Keluar'} ${formatRupiah(item.jumlah)}` +
+    (namaPj(item) ? `<br>PJ: ${esc(namaPj(item))}` : '');
+  $('alasanHapus').value = '';
   $('deleteScreen').classList.remove('hidden');
   document.querySelectorAll('.del-pin').forEach(b => b.value = '');
   $('pesanErrorHapus').style.display = 'none';
-  setTimeout(() => document.querySelectorAll('.del-pin')[0].focus(), 100);
+  setTimeout(() => $('alasanHapus').focus(), 100);
 };
 const tutupModalHapus = () => $('deleteScreen').classList.add('hidden');
 
 $('formDelete').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const alasan = $('alasanHapus').value.trim();
   const pin = bacaPin('.del-pin');
   const err = $('pesanErrorHapus'), btn = $('btnVerifyHapus');
+  if (alasan.length < 3) { err.textContent = 'Alasan menghapus wajib diisi.'; err.style.display = 'block'; $('alasanHapus').focus(); return; }
   if (pin.length < 4) { err.textContent = 'Isi 4 angka PIN.'; err.style.display = 'block'; return; }
   btn.disabled = true; btn.textContent = 'Memeriksa…'; err.style.display = 'none';
   try {
-    const res = await postJSON({ action:'verify_delete', password:pin });
-    const hasil = await res.json();
+    const hasil = await kirimJSON({ action:'verify_delete', password:pin }, 30000);
     if (hasil.status === 'success') {
       const id = itemHapusAktif;
       tutupModalHapus();
       setTimeout(() => {
-        if (confirm('Yakin ingin menghapus data ini?\nData akan terhapus permanen dalam 30 detik. Selama itu Anda masih bisa menekan Batal.')) jalankanTimerHapus(id);
+        if (confirm(`Yakin ingin menghapus data ini?\nData akan terhapus permanen dalam ${WAKTU_HAPUS} detik. Selama itu Anda masih bisa menekan Batal.`)) jalankanTimerHapus(id, alasan);
       }, 150);
     } else { err.textContent = 'PIN hapus salah.'; err.style.display = 'block'; }
   } catch (x) { err.textContent = 'Tidak bisa terhubung. Periksa internet Anda.'; err.style.display = 'block'; }
   finally { btn.disabled = false; btn.textContent = 'Hapus data'; }
 });
 
-const jalankanTimerHapus = (id) => {
+const jalankanTimerHapus = (id, alasan) => {
   const item = dataKeuangan.find(x => String(x.id) === String(id));
   if (!item) return;
-  item.pendingDelete = true; item.timeLeft = 30;
+  item.pendingDelete = true; item.timeLeft = WAKTU_HAPUS; item.alasanHapus = alasan;
   updateUI();
   item.intervalId = setInterval(async () => {
     item.timeLeft--;
@@ -696,8 +739,16 @@ const jalankanTimerHapus = (id) => {
     if (btn) btn.textContent = teksTimer(item.timeLeft);
     if (item.timeLeft <= 0) {
       clearInterval(item.intervalId);
-      try { await postJSON({ action:'delete', id:String(id) }); } catch (x) {}
-      dataKeuangan = dataKeuangan.filter(x => String(x.id) !== String(id));
+      try {
+        const h = await kirimJSON({ action:'delete', id:String(id), alasan:item.alasanHapus }, 60000);
+        if (h.status !== 'deleted') throw new Error(h.message || 'Gagal menghapus.');
+        dataKeuangan = dataKeuangan.filter(x => String(x.id) !== String(id));
+        toast('Data sudah dihapus.');
+      } catch (x) {
+        // Gagal di server: kembalikan data ke daftar supaya tidak terlihat terhapus padahal masih ada
+        item.pendingDelete = false;
+        toast((x.message || 'Gagal menghapus.') + ' Data dikembalikan.');
+      }
       updateUI();
     }
   }, 1000);
@@ -868,7 +919,7 @@ $('btnCetak').addEventListener('click', async () => {
 
 // Android: pastikan kolom yang diketik tidak tertutup keyboard
 document.addEventListener('focusin', (e) => {
-  if (e.target.closest && e.target.closest('.kotak') && /INPUT|SELECT/.test(e.target.tagName)) {
+  if (e.target.closest && e.target.closest('.kotak') && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) {
     setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300);
   }
 });
