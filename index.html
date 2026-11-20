@@ -212,7 +212,7 @@ input,select{width:100%;padding:12px;font:inherit;border:1px solid #b9c2cc;borde
         <input type="date" id="tanggal" required>
       </div>
       <div class="fg">
-        <label>Foto bukti (nota / kegiatan)</label>
+        <label>Foto bukti (nota / kegiatan) <span class="merah">*wajib</span></label>
         <div class="fotoBtns">
           <button type="button" class="btn abu" id="btnKamera">📷 Ambil foto</button>
           <button type="button" class="btn abu" id="btnGaleri">🖼 Dari galeri</button>
@@ -261,7 +261,7 @@ input,select{width:100%;padding:12px;font:inherit;border:1px solid #b9c2cc;borde
       <label class="cek"><input type="checkbox" id="lapFoto" checked> Sertakan lampiran foto bukti</label>
       <div class="baris2 fg">
         <div><label for="lapKetua">Nama Ketua</label><input type="text" id="lapKetua" placeholder="Nama ketua"></div>
-        <div><label for="lapBendahara">Nama Bendahara</label><input type="text" id="lapBendahara" placeholder="Nama bendahara"></div>
+        <div><label for="lapBendahara">Nama Penanggung Jawab</label><input type="text" id="lapBendahara" placeholder="Nama penanggung jawab"></div>
       </div>
       <button type="button" class="btn" id="btnCetak">🖨 Cetak / Simpan PDF</button>
       <button type="button" class="btn abu" onclick="tutupLaporan()">Tutup</button>
@@ -329,7 +329,7 @@ input,select{width:100%;padding:12px;font:inherit;border:1px solid #b9c2cc;borde
 <div id="toast" class="hidden"></div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzZV7cezuIMDd4My-6w5gRVS8GsWeMUXlL2oc_iofVlJTnbWW38pFgFwCx9dbbzV37g7w/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwOtH0MSbkyZLIcQaLlnndjvjhOq9AXU-ncUHrnKgOSJCV6OHZ2fyME7aQzFg88gvqt6A/exec";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -570,7 +570,7 @@ $('jumlah').addEventListener('input', (e) => {
 $('formTransaksi').addEventListener('submit', async function (e) {
   e.preventDefault();
   if (!parseInt($('jumlah').value.replace(/\D/g, ''), 10)) { toast('Isi jumlah lebih dari 0.'); return; }
-  if (!fotoData && !confirm('Belum ada foto bukti. Simpan tanpa foto?')) return;
+  if (!fotoData) { toast('Foto bukti wajib diisi.'); return; }
   const btn = $('btnSubmit');
   btn.disabled = true; btn.textContent = 'Menyimpan…';
   const data = {
@@ -589,6 +589,7 @@ $('formTransaksi').addEventListener('submit', async function (e) {
   try {
     const res = await postJSON(kirim);
     let h = {}; try { h = await res.json(); } catch (x) {}
+    if (h.status === 'error') { toast(h.message || 'Gagal menyimpan. Coba lagi.'); return; }
     if (adaFoto && h.fotoId) lokal.foto = h.fotoId;
     dataKeuangan.push(lokal);
     const bulanBaru = lokal.tanggal.slice(0, 7);
@@ -776,7 +777,7 @@ const renderLaporan = () => {
 
     <div class="ttd">
       <div>Mengetahui,<br>Ketua<div class="nama">${esc(ketua)}</div></div>
-      <div>${esc(tglPanjang(new Date()))}<br>Bendahara<div class="nama">${esc(bendahara)}</div></div>
+      <div>${esc(tglPanjang(new Date()))}<br>Penanggung Jawab<div class="nama">${esc(bendahara)}</div></div>
     </div>
     <div class="cetak-info">Dicetak dari aplikasi Keuangan KIR TEI pada ${esc(new Date().toLocaleString('id-ID'))}.</div>
     ${galeri}`;
