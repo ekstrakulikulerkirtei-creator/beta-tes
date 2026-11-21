@@ -429,7 +429,7 @@ input,select{min-height:48px}
     </div>
     <button type="button" class="menuItem" onclick="menuLaporan()">🖨 <span>Cetak laporan<small>Mingguan, bulanan, atau satu periode</small></span></button>
     <button type="button" class="menuItem bahaya" id="btnTutupBuku" onclick="menuReset()">📕 <span>Reset (tutup buku)<small>Ganti pengurus. Perlu PIN reset 6 angka</small></span></button>
-    <div class="sbCatatan">Wirausaha KIR TEI · v3.5</div>
+    <div class="sbCatatan">Wirausaha KIR TEI · v3.6</div>
   </aside>
 
   <div class="top">
@@ -494,7 +494,7 @@ input,select{min-height:48px}
     <div id="daftar"><div class="kosong">Memuat data…</div></div>
   </div>
 
-  <div class="foot">Wirausaha KIR TEI · v3.5</div>
+  <div class="foot">Wirausaha KIR TEI · v3.6</div>
 </div>
 
 <div id="toast" class="hidden"></div>
@@ -651,15 +651,22 @@ const fotoSrc = (f) => {
   return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(s) + '&sz=w1000';
 };
 
+// Cadangan: bila server mengirim nama kolom alternatif, samakan ke nama yang dipakai aplikasi
+const rapikan = (daftar) => daftar.map(i => {
+  if (!i.transaksi && i.kategori) i.transaksi = i.kategori;
+  if (!i.uraian && i.keterangan) i.uraian = i.keterangan;
+  return i;
+});
+
 // Mengembalikan true bila berhasil
 const muatDataOnline = async () => {
   try {
     const res = await fetch(API_URL + '?v=2');
     const hasil = await res.json();
     if (Array.isArray(hasil)) { // server lama (belum diperbarui)
-      dataKeuangan = hasil; daftarPeriode = []; periodeAktif = 'Periode berjalan';
+      dataKeuangan = rapikan(hasil); daftarPeriode = []; periodeAktif = 'Periode berjalan';
     } else {
-      dataKeuangan = Array.isArray(hasil.data) ? hasil.data : [];
+      dataKeuangan = rapikan(Array.isArray(hasil.data) ? hasil.data : []);
       daftarPeriode = Array.isArray(hasil.periode) ? hasil.periode : [];
       periodeAktif = String(hasil.periodeAktif || 'Periode berjalan');
     }
