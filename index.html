@@ -22,13 +22,30 @@ textarea{min-height:84px;resize:vertical}
 .btn{display:block;width:100%;padding:14px;border:0;border-radius:10px;font-weight:700;color:#fff;background:var(--biru)}
 .btn.abu{background:#e9edf2;color:var(--teks)}
 .btn.lap{background:#fff;color:var(--biru);border:2px solid var(--biru);margin-bottom:14px}
-.btn.tutup{background:#fff;color:var(--merah);border:2px solid var(--merah);margin-bottom:14px}
 .btn:disabled{opacity:.6}
 
 /* Header */
-.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.top h1{margin:0;font-size:22px;color:var(--biru)}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.top h1{flex:1;margin:0;font-size:22px;color:var(--biru)}
 .top button{border:1px solid var(--garis);background:#fff;border-radius:8px;padding:8px 14px}
+.top .btnMenu{width:46px;height:46px;padding:0;font-size:24px;line-height:1;color:var(--biru);flex-shrink:0}
+
+/* Sidebar */
+#sidebarOverlay{position:fixed;inset:0;background:rgba(20,30,45,.5);z-index:40}
+#sidebar{position:fixed;top:0;left:0;bottom:0;width:290px;max-width:84vw;background:#fff;z-index:45;
+  transform:translateX(-100%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s;
+  display:flex;flex-direction:column;overflow:auto;
+  padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+  box-shadow:4px 0 18px rgba(0,0,0,.18)}
+#sidebar.buka{transform:none;visibility:visible;transition:transform .22s ease,visibility 0s}
+.sbHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.sbHead b{font-size:19px;color:var(--biru)}
+.sbHead button{border:0;background:var(--bg);border-radius:8px;width:42px;height:42px;font-size:20px}
+.menuItem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:14px;margin-bottom:10px;
+  border:1px solid var(--garis);background:#fff;border-radius:10px;font-weight:700;color:var(--biru);min-height:54px}
+.menuItem.bahaya{color:var(--merah);border-color:#f0b4b4}
+.menuItem small{display:block;font-weight:400;color:var(--abu);font-size:12px}
+.sbCatatan{font-size:12px;color:var(--abu);margin-top:auto;padding-top:14px}
 
 /* Periode kepengurusan */
 .periodeCard select{font-weight:600}
@@ -88,6 +105,9 @@ textarea{min-height:84px;resize:vertical}
 .kotak p.ket{margin:0 0 16px;color:var(--abu)}
 .pin{display:flex;justify-content:center;gap:10px;margin-bottom:16px}
 .pin input{width:56px;height:60px;text-align:center;font-size:26px;font-weight:700;padding:0}
+/* PIN reset 6 angka: kotak lebih kecil agar muat di layar sempit */
+.pin.enam{gap:6px}
+.pin.enam input{flex:1;min-width:0;max-width:48px;width:auto;height:54px;font-size:22px}
 .galat{color:var(--merah);font-weight:600;margin:12px 0 0;display:none;text-align:center}
 .kotak .btn+.btn{margin-top:10px}
 .baris2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -118,8 +138,13 @@ textarea{min-height:84px;resize:vertical}
 #laporanScreen .wrap{max-width:820px}
 .cek{display:flex;align-items:center;gap:10px;font-weight:600;margin:0 0 14px}
 .cek input{width:22px;height:22px;flex-shrink:0}
+.logoWrap{display:flex;align-items:center;gap:12px;margin-top:8px}
+.logoWrap img{width:56px;height:56px;object-fit:contain;border:1px solid var(--garis);border-radius:8px;background:#fff}
 #laporanDoc{background:#fff;border:1px solid var(--garis);border-radius:8px;padding:22px;font-size:13px;color:#000;overflow-x:auto}
-.kop{text-align:center;border-bottom:3px double #000;padding-bottom:10px;margin-bottom:14px}
+.kop{display:flex;align-items:center;gap:12px;text-align:center;border-bottom:3px double #000;padding-bottom:10px;margin-bottom:14px}
+.kop .teks{flex:1;min-width:0}
+.kop .logoKop{width:74px;height:74px;object-fit:contain;flex-shrink:0}
+.kop .logoSpacer{width:74px;flex-shrink:0}
 .kop h3{margin:0;font-size:20px;letter-spacing:1px}
 .kop .jdl{font-size:16px;font-weight:700;margin-top:4px}
 .kop .per{font-size:13px;margin-top:2px}
@@ -141,8 +166,8 @@ textarea{min-height:84px;resize:vertical}
 .galeri figure{margin:0;border:1px solid #999;padding:6px;break-inside:avoid;page-break-inside:avoid}
 .galeri img{width:100%;height:230px;object-fit:contain;background:#f4f6f9;display:block}
 .galeri figcaption{font-size:11px;margin-top:4px}
-.ttd{display:grid;grid-template-columns:1fr 1fr;gap:20px;text-align:center;margin-top:28px;break-inside:avoid;page-break-inside:avoid}
-.ttd .nama{margin-top:64px;font-weight:700;text-decoration:underline;min-height:1.2em}
+.ttd{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;text-align:center;margin-top:28px;break-inside:avoid;page-break-inside:avoid}
+.ttd .nama{margin-top:64px;font-weight:700;text-decoration:underline;min-height:1.2em;overflow-wrap:anywhere}
 .cetak-info{font-size:11px;color:#555;margin-top:14px}
 
 /* ===== Android / layar sempit ===== */
@@ -192,6 +217,7 @@ input,select{min-height:48px}
   #laporanDoc{border:0;border-radius:0;padding:0;overflow:visible}
   .tb tr{break-inside:avoid;page-break-inside:avoid}
   .tb th,.tb tr.tot td,.tb tr.bln td,.tb tr.sub td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .kop .logoKop{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
 </head>
@@ -240,10 +266,10 @@ input,select{min-height:48px}
   </div>
 </div>
 
-<!-- TUTUP BUKU / GANTI PENGURUS -->
+<!-- RESET: TUTUP BUKU / GANTI PENGURUS (PIN khusus 6 angka) -->
 <div id="tutupScreen" class="layar hidden">
   <div class="kotak">
-    <h2>Tutup buku</h2>
+    <h2>Reset: tutup buku</h2>
     <p class="ket">Pergantian pengurus. Data periode ini tidak dihapus, tetapi disimpan sebagai arsip kepengurusan.</p>
     <div class="dataTutup" id="infoTutup"></div>
     <form id="formTutup">
@@ -260,15 +286,18 @@ input,select{min-height:48px}
         <label for="konfirmTutup">Ketik <b>TUTUP BUKU</b> untuk konfirmasi</label>
         <input type="text" id="konfirmTutup" required autocomplete="off" autocapitalize="characters" placeholder="TUTUP BUKU">
       </div>
-      <label>PIN hapus (4 angka)</label>
-      <div class="pin">
-        <input type="password" class="tb-pin" maxlength="1" required inputmode="numeric" aria-label="PIN angka 1">
-        <input type="password" class="tb-pin" maxlength="1" required inputmode="numeric" aria-label="PIN angka 2">
-        <input type="password" class="tb-pin" maxlength="1" required inputmode="numeric" aria-label="PIN angka 3">
-        <input type="password" class="tb-pin" maxlength="1" required inputmode="numeric" aria-label="PIN angka 4">
+      <label>PIN reset (6 angka)</label>
+      <div class="pin enam">
+        <input type="password" class="tb-pin" maxlength="1" required inputmode="numeric" aria-label="PIN reset angka 1">
+        <input type="password" class="tb-pin" maxlength="1" required inputmode="numeric" aria-label="PIN reset angka 2">
+        <input type="password" class="tb-pin" maxlength="1" required inputmode="numeric" aria-label="PIN reset angka 3">
+        <input type="password" class="tb-pin" maxlength="1" required inputmode="numeric" aria-label="PIN reset angka 4">
+        <input type="password" class="tb-pin" maxlength="1" required inputmode="numeric" aria-label="PIN reset angka 5">
+        <input type="password" class="tb-pin" maxlength="1" required inputmode="numeric" aria-label="PIN reset angka 6">
       </div>
+      <p class="kecil" style="margin:-8px 0 14px;text-align:center">PIN reset berbeda dari PIN masuk dan PIN hapus.</p>
       <button type="button" class="btn lap" id="btnCetakDulu">🖨 Cetak laporan periode ini dulu</button>
-      <button type="submit" class="btn" style="background:var(--merah)" id="btnTutup">Tutup buku sekarang</button>
+      <button type="submit" class="btn" style="background:var(--merah)" id="btnTutup">Reset sekarang</button>
       <button type="button" class="btn abu" onclick="tutupModalTutup()">Batal</button>
     </form>
     <p id="pesanErrorTutup" class="galat"></p>
@@ -359,9 +388,26 @@ input,select{min-height:48px}
       </div>
       <p class="kecil" id="lapPeriodeInfo" style="margin:0 0 14px"></p>
       <label class="cek"><input type="checkbox" id="lapFoto" checked> Sertakan lampiran foto bukti</label>
-      <div class="baris2 fg">
-        <div><label for="lapKetua">Nama Ketua</label><input type="text" id="lapKetua" placeholder="Nama ketua"></div>
-        <div><label for="lapBendahara">Nama Penanggung Jawab</label><input type="text" id="lapBendahara" placeholder="Nama penanggung jawab"></div>
+      <div class="fg">
+        <label for="lapPembina">Nama Pembina</label>
+        <input type="text" id="lapPembina" placeholder="Nama pembina (mengetahui)">
+      </div>
+      <div class="fg">
+        <label for="lapKetua">Nama Ketua Wirausaha</label>
+        <input type="text" id="lapKetua" placeholder="Nama ketua wirausaha">
+      </div>
+      <div class="fg">
+        <label for="lapBendahara">Nama Penanggung Jawab</label>
+        <input type="text" id="lapBendahara" placeholder="Nama penanggung jawab">
+      </div>
+      <div class="fg">
+        <label for="lapLogoFile">Logo ekstrakurikuler (tampil di kop cetak)</label>
+        <input type="file" id="lapLogoFile" accept="image/*">
+        <div id="logoWrap" class="logoWrap hidden">
+          <img id="logoPrev" alt="Logo ekstrakurikuler">
+          <button type="button" class="hapus" id="btnHapusLogo">Hapus logo</button>
+        </div>
+        <p class="kecil">Logo disimpan di perangkat ini. Agar tampil di semua perangkat, isi LOGO_BAWAAN di dalam kode.</p>
       </div>
       <button type="button" class="btn" id="btnCetak">🖨 Cetak / Simpan PDF</button>
       <button type="button" class="btn abu" onclick="tutupLaporan()">Tutup</button>
@@ -374,7 +420,20 @@ input,select{min-height:48px}
 <!-- APLIKASI -->
 <div id="appContent" class="wrap hidden">
 
+  <!-- SIDEBAR -->
+  <div id="sidebarOverlay" class="hidden" onclick="tutupSidebar()"></div>
+  <aside id="sidebar" aria-hidden="true" aria-label="Menu samping">
+    <div class="sbHead">
+      <b>Menu</b>
+      <button type="button" onclick="tutupSidebar()" aria-label="Tutup menu">✕</button>
+    </div>
+    <button type="button" class="menuItem" onclick="menuLaporan()">🖨 <span>Cetak laporan<small>Mingguan, bulanan, atau satu periode</small></span></button>
+    <button type="button" class="menuItem bahaya" id="btnTutupBuku" onclick="menuReset()">📕 <span>Reset (tutup buku)<small>Ganti pengurus. Perlu PIN reset 6 angka</small></span></button>
+    <div class="sbCatatan">Wirausaha KIR TEI · v3.5</div>
+  </aside>
+
   <div class="top">
+    <button type="button" class="btnMenu" id="btnMenu" onclick="bukaSidebar()" aria-label="Buka menu">☰</button>
     <h1>Keuangan KIR TEI</h1>
     <button onclick="logout()">Keluar</button>
   </div>
@@ -399,9 +458,6 @@ input,select{min-height:48px}
     <button class="btn masuk" onclick="bukaForm('PEMASUKAN')">+ Uang masuk</button>
     <button class="btn keluar" onclick="bukaForm('PENGELUARAN')">− Uang keluar</button>
   </div>
-
-  <button class="btn lap" onclick="bukaLaporan()">🖨 Laporan mingguan / bulanan / periode</button>
-  <button class="btn tutup" id="btnTutupBuku" onclick="bukaTutupBuku()">📕 Tutup buku / ganti pengurus</button>
 
   <div class="card">
     <div class="bulan-head">
@@ -438,7 +494,7 @@ input,select{min-height:48px}
     <div id="daftar"><div class="kosong">Memuat data…</div></div>
   </div>
 
-  <div class="foot">Wirausaha KIR TEI · v3.4</div>
+  <div class="foot">Wirausaha KIR TEI · v3.5</div>
 </div>
 
 <div id="toast" class="hidden"></div>
@@ -446,6 +502,12 @@ input,select{min-height:48px}
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzZV7cezuIMDd4My-6w5gRVS8GsWeMUXlL2oc_iofVlJTnbWW38pFgFwCx9dbbzV37g7w/exec";
 const WAKTU_HAPUS = 10; // detik menunggu sebelum data benar-benar dihapus
+
+// LOGO EKSTRAKURIKULER (tampil di kop laporan cetak).
+// Cara tetap untuk semua perangkat: isi dengan alamat file logo di folder yang sama dengan index.html
+// (contoh: 'logo.png') atau data URL gambar (data:image/png;base64,...).
+// Cara cepat: unggah logo lewat menu Cetak laporan (tersimpan di perangkat itu saja).
+const LOGO_BAWAAN = '';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -491,6 +553,19 @@ const bacaPin = (selector) => [...document.querySelectorAll(selector)].map(b => 
 
 // Nama penanggung jawab tidak lagi disimpan: harus diisi ulang setiap kali mencatat.
 try { localStorage.removeItem('lastPj'); sessionStorage.removeItem('lastPj'); } catch (x) {}
+
+// ================== SIDEBAR ==================
+const bukaSidebar = () => {
+  $('sidebar').classList.add('buka'); $('sidebar').setAttribute('aria-hidden', 'false');
+  $('sidebarOverlay').classList.remove('hidden');
+};
+const tutupSidebar = () => {
+  $('sidebar').classList.remove('buka'); $('sidebar').setAttribute('aria-hidden', 'true');
+  $('sidebarOverlay').classList.add('hidden');
+};
+const menuLaporan = () => { tutupSidebar(); bukaLaporan(); };
+const menuReset = () => { tutupSidebar(); bukaTutupBuku(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') tutupSidebar(); });
 
 // ================== MASUK ==================
 $('formLogin').addEventListener('submit', async (e) => {
@@ -941,7 +1016,7 @@ const batalHapus = (id) => {
   updateUI();
 };
 
-// ================== TUTUP BUKU / GANTI PENGURUS ==================
+// ================== RESET: TUTUP BUKU / GANTI PENGURUS ==================
 const bukaTutupBuku = () => {
   if (lihatArsip()) return;
   const data = dataKeuangan.filter(i => periodeItem(i) === periodeAktif && !i.pendingDelete);
@@ -970,7 +1045,7 @@ const selesaiTutup = async (nama) => {
   filterBulan = hariIni().slice(0, 7); $('filterBulan').value = filterBulan;
   await muatDataOnline();
   window.scrollTo(0, 0);
-  toast(`Buku ditutup. Data lama menjadi arsip. Periode baru: ${nama}`);
+  toast(`Reset selesai. Data lama menjadi arsip. Periode baru: ${nama}`);
 };
 
 $('formTutup').addEventListener('submit', async (e) => {
@@ -982,22 +1057,61 @@ $('formTutup').addEventListener('submit', async (e) => {
   if (nama.length < 3) { tampilErr('Nama periode baru minimal 3 huruf.'); return; }
   if (daftarPeriode.some(p => p.nama.toLowerCase() === nama.toLowerCase()) || nama.toLowerCase() === periodeAktif.toLowerCase()) { tampilErr('Nama periode sudah dipakai. Pilih nama lain.'); return; }
   if ($('konfirmTutup').value.trim().toUpperCase() !== 'TUTUP BUKU') { tampilErr('Ketik TUTUP BUKU untuk konfirmasi.'); return; }
-  if (pin.length < 4) { tampilErr('Isi 4 angka PIN.'); return; }
+  if (pin.length < 6) { tampilErr('Isi 6 angka PIN reset.'); return; }
   if (dataKeuangan.some(i => i.pendingDelete)) { tampilErr('Masih ada data yang menunggu dihapus. Tunggu selesai atau batalkan dulu.'); return; }
-  btn.disabled = true; btn.textContent = 'Menutup buku… (jangan ditutup)'; err.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Memproses reset… (jangan ditutup)'; err.style.display = 'none';
   try {
     const h = await kirimJSON({
       action: 'tutup_buku', password: pin, namaBaru: nama, konfirmasi: 'TUTUP BUKU',
       catatan: $('catatanTutup').value.trim(), bawaSaldo: $('bawaSaldo').checked
     }, 120000);
     if (h.status === 'success') { await selesaiTutup(nama); }
-    else { tampilErr(h.message || 'Gagal menutup buku.'); }
+    else { tampilErr(h.message || 'Gagal melakukan reset.'); }
   } catch (x) {
     // Bisa saja sudah berhasil di server walau balasan terputus: periksa dulu sebelum menyatakan gagal
     const ok = await muatDataOnline();
     if (ok && periodeAktif.toLowerCase() === nama.toLowerCase()) { await selesaiTutup(nama); }
-    else { tampilErr(x.message || 'Gagal menutup buku. Periksa internet lalu coba lagi.'); }
-  } finally { btn.disabled = false; btn.textContent = 'Tutup buku sekarang'; }
+    else { tampilErr(x.message || 'Gagal melakukan reset. Periksa internet lalu coba lagi.'); }
+  } finally { btn.disabled = false; btn.textContent = 'Reset sekarang'; }
+});
+
+// ================== LOGO EKSTRAKURIKULER ==================
+const logoAktif = () => { try { return localStorage.getItem('logoEkskul') || LOGO_BAWAAN || ''; } catch (x) { return LOGO_BAWAAN || ''; } };
+
+// Kecilkan logo (maks 300 px), tetap PNG agar latar transparan tidak hilang
+const kecilkanLogo = (file, maks = 300) => new Promise((ok, gagal) => {
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = () => {
+    const r = Math.min(1, maks / Math.max(img.width, img.height));
+    const w = Math.round(img.width * r), h = Math.round(img.height * r);
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    c.getContext('2d').drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(url);
+    ok(c.toDataURL('image/png'));
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); gagal(new Error('Logo tidak bisa dibaca')); };
+  img.src = url;
+});
+
+const segarkanLogoUI = () => {
+  const s = logoAktif();
+  $('logoWrap').classList.toggle('hidden', !s);
+  if (s) $('logoPrev').src = s; else $('logoPrev').removeAttribute('src');
+};
+$('lapLogoFile').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  try {
+    const data = await kecilkanLogo(file);
+    try { localStorage.setItem('logoEkskul', data); } catch (x) { toast('Logo terlalu besar untuk disimpan di perangkat ini.'); return; }
+    segarkanLogoUI(); renderLaporan();
+    toast('Logo disimpan.');
+  } catch (x) { toast('Logo tidak bisa dibaca. Coba gambar lain.'); }
+  finally { e.target.value = ''; }
+});
+$('btnHapusLogo').addEventListener('click', () => {
+  try { localStorage.removeItem('logoEkskul'); } catch (x) {}
+  segarkanLogoUI(); renderLaporan();
 });
 
 // ================== LAPORAN ==================
@@ -1010,9 +1124,11 @@ const bukaLaporan = (mode) => {
   if (!$('lapMinggu').value) $('lapMinggu').value = hariIni();
   $('lapBulan').value = filterBulan || hariIni().slice(0, 7);
   try {
+    $('lapPembina').value = localStorage.getItem('lapPembina') || '';
     $('lapKetua').value = localStorage.getItem('lapKetua') || '';
     $('lapBendahara').value = localStorage.getItem('lapBendahara') || '';
   } catch (x) {}
+  segarkanLogoUI();
   $('laporanScreen').classList.remove('hidden');
   $('laporanScreen').scrollTop = 0;
   renderLaporan();
@@ -1131,10 +1247,16 @@ const renderLaporan = () => {
     </figure>`).join('')}</div>` : '';
 
   const tanpa = baris.length - berFoto.length;
+  const pembina = $('lapPembina').value.trim();
   const ketua = $('lapKetua').value.trim(), bendahara = $('lapBendahara').value.trim();
+  const logo = logoAktif();
 
   $('laporanDoc').innerHTML = `
-    <div class="kop"><h3>WIRAUSAHA KIR TEI</h3><div class="jdl">${judul}</div><div class="per">${esc(periode)}</div><div class="per">Kepengurusan: ${esc(periodeLihat)}</div></div>
+    <div class="kop">
+      ${logo ? `<img class="logoKop" src="${esc(logo)}" alt="Logo ekstrakurikuler">` : ''}
+      <div class="teks"><h3>WIRAUSAHA KIR TEI</h3><div class="jdl">${judul}</div><div class="per">${esc(periode)}</div><div class="per">Kepengurusan: ${esc(periodeLihat)}</div></div>
+      ${logo ? '<span class="logoSpacer"></span>' : ''}
+    </div>
 
     <h4>Ringkasan</h4>
     <table class="ringkas-lap">
@@ -1173,7 +1295,8 @@ const renderLaporan = () => {
     ${denganFoto && tanpa ? `<p class="cetak-info">Catatan: ${tanpa} transaksi pada laporan ini belum memiliki foto bukti.</p>` : ''}
 
     <div class="ttd">
-      <div>Mengetahui,<br>Ketua<div class="nama">${esc(ketua)}</div></div>
+      <div>Mengetahui,<br>Pembina<div class="nama">${esc(pembina)}</div></div>
+      <div><br>Ketua Wirausaha<div class="nama">${esc(ketua)}</div></div>
       <div>${esc(tglPanjang(new Date()))}<br>Penanggung Jawab<div class="nama">${esc(bendahara)}</div></div>
     </div>
     <div class="cetak-info">Dicetak dari aplikasi Keuangan KIR TEI pada ${esc(new Date().toLocaleString('id-ID'))}.</div>
@@ -1181,7 +1304,7 @@ const renderLaporan = () => {
 };
 
 ['lapJenis', 'lapMinggu', 'lapBulan', 'lapFoto'].forEach(id => $(id).addEventListener('change', renderLaporan));
-['lapKetua', 'lapBendahara'].forEach(id => $(id).addEventListener('input', () => {
+['lapPembina', 'lapKetua', 'lapBendahara'].forEach(id => $(id).addEventListener('input', () => {
   try { localStorage.setItem(id, $(id).value); } catch (x) {}
   renderLaporan();
 }));
