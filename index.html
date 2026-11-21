@@ -60,7 +60,6 @@ textarea{min-height:84px;resize:vertical}
 .saldo .baris{display:flex;gap:10px}
 .saldo .baris div{flex:1;background:rgba(255,255,255,.15);border-radius:8px;padding:8px 10px;font-size:14px}
 .saldo .baris b{display:block;font-size:16px}
-.saldo .btnModal{margin-top:10px;width:100%;padding:10px;min-height:44px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.15);color:#fff;border-radius:8px;font-weight:700}
 
 /* Tombol catat */
 .aksi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
@@ -320,8 +319,9 @@ input,select{min-height:48px}
         <input type="text" id="modalJumlah" required inputmode="numeric" autocomplete="off" placeholder="Rp 0">
       </div>
       <div class="fg">
-        <label for="modalCatatan">Catatan (boleh kosong)</label>
-        <input type="text" id="modalCatatan" maxlength="300" placeholder="Contoh: sisa kas kegiatan sebelumnya">
+        <label for="modalCatatan">Catatan perubahan <span class="merah">*wajib</span></label>
+        <input type="text" id="modalCatatan" required minlength="3" maxlength="300" autocomplete="off" placeholder="Contoh: sisa kas kegiatan sebelumnya">
+        <p class="kecil">Jelaskan asal modal atau alasan mengubahnya. Tercatat di sheet Riwayat Modal.</p>
       </div>
       <label>PIN hapus (4 angka)</label>
       <div class="pin">
@@ -334,6 +334,16 @@ input,select{min-height:48px}
       <button type="button" class="btn abu" onclick="tutupModalAwal()">Batal</button>
     </form>
     <p id="pesanErrorModal" class="galat"></p>
+  </div>
+</div>
+
+<!-- KONFIRMASI (pengganti kotak bawaan browser) -->
+<div id="konfirmScreen" class="layar hidden" style="z-index:80">
+  <div class="kotak">
+    <h2 id="konfirmJudul"></h2>
+    <p class="ket" id="konfirmIsi" style="white-space:pre-line;margin-bottom:18px"></p>
+    <button type="button" class="btn" id="konfirmOk">Ya, lanjutkan</button>
+    <button type="button" class="btn abu" id="konfirmBatal">Batal</button>
   </div>
 </div>
 
@@ -468,7 +478,7 @@ input,select{min-height:48px}
     <button type="button" class="menuItem" onclick="menuLaporan()">🖨 <span>Cetak laporan<small>Mingguan, bulanan, atau satu periode</small></span></button>
     <button type="button" class="menuItem" id="btnMenuModal" onclick="menuModal()">💰 <span>Atur modal awal<small>Uang kas awal periode ini. Perlu PIN hapus</small></span></button>
     <button type="button" class="menuItem bahaya" id="btnTutupBuku" onclick="menuReset()">📕 <span>Reset (tutup buku)<small>Ganti pengurus. Perlu PIN reset 6 angka</small></span></button>
-    <div class="sbCatatan">Wirausaha KIR TEI · v3.7</div>
+    <div class="sbCatatan">Wirausaha KIR TEI · v3.8</div>
   </aside>
 
   <div class="top">
@@ -491,7 +501,6 @@ input,select{min-height:48px}
       <div>Total masuk<b id="grandTotalPemasukan">Rp 0</b></div>
       <div>Total keluar<b id="grandTotalPengeluaran">Rp 0</b></div>
     </div>
-    <button type="button" class="btnModal" id="btnModalCepat" onclick="menuModal()">💰 Atur modal awal</button>
   </div>
 
   <div class="aksi" id="barAksi">
@@ -534,7 +543,7 @@ input,select{min-height:48px}
     <div id="daftar"><div class="kosong">Memuat data…</div></div>
   </div>
 
-  <div class="foot">Wirausaha KIR TEI · v3.7</div>
+  <div class="foot">Wirausaha KIR TEI · v3.8</div>
 </div>
 
 <div id="toast" class="hidden"></div>
@@ -589,6 +598,20 @@ const setupPin = (selector) => {
   });
 };
 setupPin('.log-pin'); setupPin('.del-pin'); setupPin('.tb-pin'); setupPin('.mo-pin');
+// Kotak konfirmasi di dalam aplikasi. Hasil: true (Ya) atau false (Batal)
+const tanya = (judul, isi, labelOk = 'Ya, lanjutkan') => new Promise(ok => {
+  $('konfirmJudul').textContent = judul;
+  $('konfirmIsi').textContent = isi;
+  $('konfirmOk').textContent = labelOk;
+  $('konfirmScreen').classList.remove('hidden');
+  const selesai = (v) => {
+    $('konfirmScreen').classList.add('hidden');
+    $('konfirmOk').onclick = null; $('konfirmBatal').onclick = null;
+    ok(v);
+  };
+  $('konfirmOk').onclick = () => selesai(true);
+  $('konfirmBatal').onclick = () => selesai(false);
+});
 const bacaPin = (selector) => [...document.querySelectorAll(selector)].map(b => b.value).join('');
 
 // Nama penanggung jawab tidak lagi disimpan: harus diisi ulang setiap kali mencatat.
@@ -780,7 +803,6 @@ const updateUI = () => {
   $('barAksi').classList.toggle('hidden', arsip);
   $('btnTutupBuku').classList.toggle('hidden', arsip);
   $('btnMenuModal').classList.toggle('hidden', arsip);
-  $('btnModalCepat').classList.toggle('hidden', arsip);
   const ban = $('bannerArsip');
   ban.classList.toggle('hidden', !arsip);
   if (arsip) {
@@ -991,7 +1013,7 @@ $('formTransaksi').addEventListener('submit', async function (e) {
   const pj = $('pj').value.trim().replace(/\s+/g, ' ');
   if (!pj) { toast('Isi nama penanggung jawab.'); $('pj').focus(); return; }
   if (/\d/.test(pj)) { toast('Nama tidak boleh berisi angka. Tulis nama asli sesuai ID card.'); $('pj').focus(); return; }
-  if (tokenNama(pj).length < 2 && !confirm('Nama hanya satu kata.\nPastikan ini sesuai ID card, bukan nama panggilan.\n\nLanjutkan menyimpan?')) { $('pj').focus(); return; }
+  if (tokenNama(pj).length < 2 && !(await tanya('Nama hanya satu kata', 'Pastikan ini sesuai ID card, bukan nama panggilan.', 'Ya, simpan'))) { $('pj').focus(); return; }
   if (!fotoData) { toast('Foto bukti wajib diisi.'); return; }
   const btn = $('btnSubmit');
   btn.disabled = true; btn.textContent = 'Menyimpan… (tunggu, jangan ditutup)';
@@ -1026,7 +1048,7 @@ $('formTransaksi').addEventListener('submit', async function (e) {
 // ================== HAPUS ==================
 const konfirmasiHapus = (id) => {
   if (lihatArsip()) return;
-  if (!id || id === 'undefined') { alert('Data ini ditambahkan manual dari Sheet, jadi tidak bisa dihapus di sini.'); return; }
+  if (!id || id === 'undefined') { toast('Data ini ditambahkan manual dari Sheet, jadi tidak bisa dihapus di sini.'); return; }
   const item = dataKeuangan.find(x => String(x.id) === String(id));
   if (!item) return;
   itemHapusAktif = id;
@@ -1056,8 +1078,8 @@ $('formDelete').addEventListener('submit', async (e) => {
     if (hasil.status === 'success') {
       const id = itemHapusAktif;
       tutupModalHapus();
-      setTimeout(() => {
-        if (confirm(`Yakin ingin menghapus data ini?\nData akan terhapus permanen dalam ${WAKTU_HAPUS} detik. Selama itu Anda masih bisa menekan Batal.`)) jalankanTimerHapus(id, alasan);
+      setTimeout(async () => {
+        if (await tanya('Hapus data ini?', `Data akan terhapus permanen dalam ${WAKTU_HAPUS} detik. Selama itu Anda masih bisa menekan Batal.`, 'Ya, hapus')) jalankanTimerHapus(id, alasan);
       }, 150);
     } else { err.textContent = 'PIN hapus salah.'; err.style.display = 'block'; }
   } catch (x) { err.textContent = 'Tidak bisa terhubung. Periksa internet Anda.'; err.style.display = 'block'; }
@@ -1183,16 +1205,25 @@ $('formModal').addEventListener('submit', async (e) => {
   const digit = $('modalJumlah').value.replace(/\D/g, '');
   if (!digit) { tampilErr('Isi nominal modal awal.'); return; }
   const jumlah = parseInt(digit, 10);
+  const catatan = $('modalCatatan').value.trim();
+  if (catatan.length < 3) { tampilErr('Catatan wajib diisi (minimal 3 huruf).'); $('modalCatatan').focus(); return; }
   const pin = bacaPin('.mo-pin');
   if (pin.length < 4) { tampilErr('Isi 4 angka PIN.'); return; }
-  if (!confirm(`Simpan modal awal ${formatRupiah(jumlah)} untuk ${periodeAktif}?\nSaldo kas dan semua laporan periode ini ikut berubah.`)) return;
-  btn.disabled = true; btn.textContent = 'Menyimpan…'; err.style.display = 'none';
+  err.style.display = 'none';
+  const lama = saldoAwalPeriode(periodeAktif);
+  const setuju = await tanya('Simpan modal awal?',
+    (lama ? `Modal awal diubah dari ${formatRupiah(lama)} menjadi ${formatRupiah(jumlah)}.` : `Modal awal diatur menjadi ${formatRupiah(jumlah)}.`) +
+    `\nPeriode: ${periodeAktif}\nCatatan: ${catatan}\n\nSaldo kas dan semua laporan periode ini ikut berubah.`, 'Ya, simpan');
+  if (!setuju) return;
+  btn.disabled = true; btn.textContent = 'Menyimpan…';
   try {
-    const h = await kirimJSON({ action: 'set_modal', password: pin, jumlah: jumlah, catatan: $('modalCatatan').value.trim() }, 60000);
+    const h = await kirimJSON({ action: 'set_modal', password: pin, jumlah: jumlah, catatan: catatan }, 60000);
     if (h.status === 'success') {
       const p = infoPeriode(periodeAktif);
       if (p) p.saldoAwal = jumlah;
       tutupModalAwal(); updateUI(); toast('Modal awal tersimpan ✓');
+    } else if (h.message === 'Aksi tidak dikenal.') {
+      tampilErr('Server belum diperbarui ke v3.8. Tempel kode.gs terbaru di Apps Script, lalu Deploy > Kelola deployment > Edit (pensil) > Versi baru > Deploy.');
     } else { tampilErr(h.message || 'Gagal menyimpan modal awal.'); }
   } catch (x) { tampilErr(x.message || 'Tidak bisa terhubung. Periksa internet Anda.'); }
   finally { btn.disabled = false; btn.textContent = 'Simpan modal awal'; }
