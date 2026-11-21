@@ -56,8 +56,11 @@ textarea{min-height:84px;resize:vertical}
 
 /* Riwayat */
 .cari{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.cari #searchInput{grid-column:1/-1}
+.hasilInfo{font-size:13px;color:var(--abu);margin:0 0 6px}
+.grupBulan{font-weight:700;font-size:13px;color:var(--biru);background:var(--bg);border-radius:6px;padding:6px 10px;margin:10px 0 0}
 .item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--garis)}
-.item:first-child{border-top:0}
+.item:first-child,.grupBulan+.item{border-top:0}
 .item .kiri{display:flex;align-items:center;gap:10px;min-width:0}
 .item .info{min-width:0}
 .item .ur{font-weight:600;overflow-wrap:anywhere}
@@ -256,6 +259,7 @@ input,select{min-height:48px}
         <label for="pj">Penanggung jawab <span class="merah">*wajib</span></label>
         <input type="text" id="pj" required list="daftarPj" autocomplete="off" placeholder="Nama yang bertanggung jawab">
         <datalist id="daftarPj"></datalist>
+        <p class="kecil">Nama terisi otomatis dari input terakhir. Ubah bila perlu.</p>
       </div>
       <div class="fg">
         <label for="tanggal">Tanggal</label>
@@ -361,7 +365,7 @@ input,select{min-height:48px}
   <div class="card">
     <h2 style="margin:0 0 12px;font-size:17px">Riwayat transaksi</h2>
     <div class="cari">
-      <input type="text" id="searchInput" placeholder="Cari keterangan atau nominal" aria-label="Cari">
+      <input type="text" id="searchInput" placeholder="Cari keterangan, nominal, atau nama PJ" aria-label="Cari">
       <select id="filterKategori" aria-label="Filter kategori">
         <option value="">Semua kategori</option>
         <option value="Setoran Harian">Setoran Harian</option>
@@ -369,11 +373,18 @@ input,select{min-height:48px}
         <option value="Keperluan Organisasi">Keperluan Organisasi</option>
         <option value="Dan Lain-Lain">Lain-lain</option>
       </select>
+      <select id="filterRentang" aria-label="Rentang bulan">
+        <option value="1">Bulan terpilih saja</option>
+        <option value="2">2 bulan (+ bulan sebelumnya)</option>
+        <option value="3">3 bulan (+ 2 bulan sebelumnya)</option>
+        <option value="0">Semua bulan</option>
+      </select>
     </div>
+    <div class="hasilInfo" id="hasilInfo"></div>
     <div id="daftar"><div class="kosong">Memuat data…</div></div>
   </div>
 
-  <div class="foot">Wirausaha KIR TEI · v3.2</div>
+  <div class="foot">Wirausaha KIR TEI · v3.3</div>
 </div>
 
 <div id="toast" class="hidden"></div>
@@ -386,7 +397,6 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 // Kirim ke server. Selalu mengembalikan objek JSON, atau melempar error dengan pesan yang jelas.
-// (Versi lama menganggap "berhasil" walau server membalas error, sehingga data tampak tersimpan padahal tidak.)
 const kirimJSON = async (data, batas = 90000) => {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), batas);
@@ -448,6 +458,7 @@ let dataKeuangan = [];
 const hariIni = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
 let filterBulan = hariIni().slice(0, 7);
 let filterKategori = '', searchQuery = '', itemHapusAktif = null, jenisForm = '', idForm = '';
+let rentangBulan = 1; // 1 = bulan terpilih saja, 2/3 = beserta bulan-bulan sebelumnya, 0 = semua
 $('filterBulan').value = filterBulan;
 
 const formatRupiah = (n) => new Intl.NumberFormat('id-ID', { style:'currency', currency:'IDR', minimumFractionDigits:0 }).format(n);
@@ -479,6 +490,24 @@ const isiDaftarPj = () => {
   $('daftarPj').innerHTML = [...s].map(n => `<option value="${esc(n)}">`).join('');
 };
 
+// Nama penanggung jawab terakhir: disimpan di memori, localStorage, sessionStorage,
+// dan sebagai cadangan diambil dari transaksi terbaru yang punya nama PJ.
+let pjTerakhir = '';
+const simpanPjTerakhir = (nama) => {
+  nama = String(nama || '').trim();
+  if (!nama) return;
+  pjTerakhir = nama;
+  try { localStorage.setItem('lastPj', nama); } catch (x) {}
+  try { sessionStorage.setItem('lastPj', nama); } catch (x) {}
+};
+const bacaPjTerakhir = () => {
+  if (pjTerakhir) return pjTerakhir;
+  try { const v = localStorage.getItem('lastPj'); if (v) return v; } catch (x) {}
+  try { const v = sessionStorage.getItem('lastPj'); if (v) return v; } catch (x) {}
+  for (let k = dataKeuangan.length - 1; k >= 0; k--) { const n = namaPj(dataKeuangan[k]); if (n) return n; }
+  return '';
+};
+
 // Alamat gambar: bisa data URL (baru difoto), link, atau ID file Google Drive
 const fotoSrc = (f) => {
   if (!f) return '';
@@ -494,7 +523,6 @@ const muatDataOnline = async () => {
   try {
     const res = await fetch(API_URL);
     const hasil = await res.json();
-    // Pertahankan data yang sedang menunggu dihapus (timer berjalan) saat memuat ulang
     dataKeuangan = Array.isArray(hasil) ? hasil : [];
     updateUI();
   } catch (err) {
@@ -503,6 +531,18 @@ const muatDataOnline = async () => {
 };
 
 const teksTimer = (s) => `Batal (${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')})`;
+
+// Kunci bulan 'yyyy-mm' dari tanggal transaksi ('' bila tanggal tidak terbaca)
+const bulanItem = (i) => {
+  const t = parseDateValue(i.tanggal); if (!t) return '';
+  const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+};
+const indeksBulan = (k) => { const p = k.split('-'); return Number(p[0]) * 12 + Number(p[1]); };
+const namaBulan = (k) => {
+  if (!k) return 'Tanpa tanggal';
+  const p = k.split('-');
+  return new Date(Number(p[0]), Number(p[1]) - 1, 1).toLocaleDateString('id-ID', { month:'long', year:'numeric' });
+};
 
 const updateUI = () => {
   // Total keseluruhan
@@ -516,15 +556,11 @@ const updateUI = () => {
   $('grandTotalPengeluaran').textContent = formatRupiah(keluar);
   $('grandTotalSaldo').textContent = formatRupiah(masuk - keluar);
 
-  const bulanItem = (i) => {
-    const t = parseDateValue(i.tanggal); if (!t) return '';
-    const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-  };
-  const diBulan = dataKeuangan
-    .filter(i => filterBulan === '' || bulanItem(i) === filterBulan)
+  const semuaUrut = dataKeuangan.slice()
     .sort((a, b) => (parseDateValue(b.tanggal) - parseDateValue(a.tanggal)) || formatJam(b.jam).localeCompare(formatJam(a.jam)));
+  const diBulan = semuaUrut.filter(i => filterBulan === '' || bulanItem(i) === filterBulan);
 
-  // Ringkasan bulan terpilih
+  // Ringkasan bulan terpilih (selalu satu bulan)
   let bm = 0, bk = 0;
   diBulan.forEach(i => {
     if (i.pendingDelete) return;
@@ -540,16 +576,39 @@ const updateUI = () => {
   $('infoFoto').textContent = !aktif.length ? '' :
     (tanpaFoto ? `📷 ${tanpaFoto} dari ${aktif.length} transaksi belum ada foto bukti.` : '✓ Semua transaksi bulan ini sudah ada foto bukti.');
 
-  // Daftar riwayat (bulan + kategori + pencarian)
+  // Rentang riwayat: bulan terpilih + (N-1) bulan sebelumnya, atau semua bulan
+  let diRentang = semuaUrut;
+  if (filterBulan !== '' && rentangBulan > 0) {
+    const akhirIdx = indeksBulan(filterBulan), awalIdx = akhirIdx - (rentangBulan - 1);
+    diRentang = semuaUrut.filter(i => {
+      const k = bulanItem(i); if (!k) return false;
+      const x = indeksBulan(k); return x >= awalIdx && x <= akhirIdx;
+    });
+  }
+
+  // Daftar riwayat (rentang bulan + kategori + pencarian)
   const q = searchQuery.toLowerCase();
-  const tampil = diBulan.filter(i =>
+  const tampil = diRentang.filter(i =>
     (filterKategori === '' || i.transaksi === filterKategori) &&
     (formatTanggal(i.tanggal).toLowerCase().includes(q) || (i.uraian && String(i.uraian).toLowerCase().includes(q)) || namaPj(i).toLowerCase().includes(q) || (i.jumlah && i.jumlah.toString().includes(q)))
   );
 
-  if (!tampil.length) { $('daftar').innerHTML = '<div class="kosong">Belum ada transaksi.</div>'; return; }
+  if (!tampil.length) {
+    $('hasilInfo').textContent = '';
+    $('daftar').innerHTML = `<div class="kosong">${diRentang.length ? 'Tidak ada transaksi yang cocok.' : 'Belum ada transaksi.'}</div>`;
+    return;
+  }
 
-  $('daftar').innerHTML = tampil.map(i => {
+  // Jumlah hasil dan total masuk/keluar dari hasil yang tampil
+  let hm = 0, hk = 0, n = 0;
+  tampil.forEach(i => {
+    if (i.pendingDelete) return;
+    n++;
+    if (i.jenis === 'PEMASUKAN') hm += Number(i.jumlah) || 0; else if (i.jenis === 'PENGELUARAN') hk += Number(i.jumlah) || 0;
+  });
+  $('hasilInfo').textContent = `${n} transaksi · Masuk ${formatRupiah(hm)} · Keluar ${formatRupiah(hk)}`;
+
+  const itemHtml = (i) => {
     const masukJenis = i.jenis === 'PEMASUKAN';
     const tombol = i.pendingDelete
       ? `<button id="btn-cancel-${esc(i.id)}" class="batal" onclick="batalHapus('${esc(i.id)}')">${teksTimer(i.timeLeft)}</button>`
@@ -564,11 +623,24 @@ const updateUI = () => {
       </div>
       <div class="kanan"><div class="jml ${masukJenis ? 'hijau' : 'merah'}">${masukJenis ? '+' : '−'} ${formatRupiah(i.jumlah)}</div>${tombol}</div>
     </div>`;
-  }).join('');
+  };
+
+  // Bila menampilkan lebih dari satu bulan, kelompokkan dengan judul bulan
+  const kelompok = rentangBulan !== 1;
+  let html = '', kunciTerakhir = null;
+  tampil.forEach(i => {
+    if (kelompok) {
+      const k = bulanItem(i);
+      if (k !== kunciTerakhir) { html += `<div class="grupBulan">${esc(namaBulan(k))}</div>`; kunciTerakhir = k; }
+    }
+    html += itemHtml(i);
+  });
+  $('daftar').innerHTML = html;
 };
 
 $('filterBulan').addEventListener('change', e => { filterBulan = e.target.value; updateUI(); });
 $('filterKategori').addEventListener('change', e => { filterKategori = e.target.value; updateUI(); });
+$('filterRentang').addEventListener('change', e => { rentangBulan = Number(e.target.value); updateUI(); });
 $('searchInput').addEventListener('input', e => { searchQuery = e.target.value; updateUI(); });
 
 // ================== FOTO ==================
@@ -637,11 +709,14 @@ const bukaForm = (jenis) => {
   resetFoto();
   $('tanggal').value = hariIni();
   isiDaftarPj();
-  try { $('pj').value = localStorage.getItem('lastPj') || ''; } catch (x) {}
+  $('pj').value = bacaPjTerakhir(); // nama penanggung jawab tidak hilang setelah input
   $('formScreen').classList.remove('hidden');
   setTimeout(() => $('jumlah').focus(), 100);
 };
 const tutupForm = () => $('formScreen').classList.add('hidden');
+
+// Simpan nama PJ begitu diubah, jadi tetap ada walau formulir ditutup tanpa menyimpan
+$('pj').addEventListener('change', () => simpanPjTerakhir($('pj').value));
 
 // Format Rp otomatis saat mengetik (contoh: 25000 menjadi Rp 25.000)
 $('jumlah').addEventListener('input', (e) => {
@@ -654,10 +729,10 @@ $('formTransaksi').addEventListener('submit', async function (e) {
   const jumlah = parseInt($('jumlah').value.replace(/\D/g, ''), 10);
   if (!jumlah) { toast('Isi jumlah lebih dari 0.'); return; }
   if (!$('transaksi').value) { toast('Pilih kategori.'); return; }
-  if (!fotoData) { toast('Foto bukti wajib diisi.'); return; }
   const pj = $('pj').value.trim();
   if (!pj) { toast('Isi nama penanggung jawab.'); $('pj').focus(); return; }
-  try { localStorage.setItem('lastPj', pj); } catch (x) {}
+  simpanPjTerakhir(pj);
+  if (!fotoData) { toast('Foto bukti wajib diisi.'); return; }
   const btn = $('btnSubmit');
   btn.disabled = true; btn.textContent = 'Menyimpan… (tunggu, jangan ditutup)';
   const data = {
