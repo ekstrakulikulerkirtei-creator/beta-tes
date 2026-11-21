@@ -60,6 +60,7 @@ textarea{min-height:84px;resize:vertical}
 .saldo .baris{display:flex;gap:10px}
 .saldo .baris div{flex:1;background:rgba(255,255,255,.15);border-radius:8px;padding:8px 10px;font-size:14px}
 .saldo .baris b{display:block;font-size:16px}
+.saldo .btnModal{margin-top:10px;width:100%;padding:10px;min-height:44px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.15);color:#fff;border-radius:8px;font-weight:700}
 
 /* Tombol catat */
 .aksi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
@@ -122,6 +123,9 @@ textarea{min-height:84px;resize:vertical}
 #fotoWrap{margin-top:10px;text-align:center}
 #fotoPreview{max-width:100%;max-height:220px;border-radius:8px;border:1px solid var(--garis)}
 .kecil{font-size:13px;color:var(--abu);margin:6px 0 0}
+
+/* Keterangan nama asli */
+.contohNama{background:#eef4fb;border:1px solid #c9dcf3;border-radius:8px;padding:8px 10px;font-size:13px;margin:8px 0 0;line-height:1.6}
 
 /* Lihat foto */
 #fotoScreen{background:rgba(0,0,0,.88);flex-direction:column;gap:12px;z-index:70}
@@ -304,6 +308,35 @@ input,select{min-height:48px}
   </div>
 </div>
 
+<!-- MODAL AWAL -->
+<div id="modalScreen" class="layar hidden">
+  <div class="kotak">
+    <h2>Modal awal</h2>
+    <p class="ket">Uang kas yang sudah ada di awal periode ini, sebelum ada transaksi.</p>
+    <div class="dataTutup" id="infoModal"></div>
+    <form id="formModal">
+      <div class="fg">
+        <label for="modalJumlah">Modal awal (Rp)</label>
+        <input type="text" id="modalJumlah" required inputmode="numeric" autocomplete="off" placeholder="Rp 0">
+      </div>
+      <div class="fg">
+        <label for="modalCatatan">Catatan (boleh kosong)</label>
+        <input type="text" id="modalCatatan" maxlength="300" placeholder="Contoh: sisa kas kegiatan sebelumnya">
+      </div>
+      <label>PIN hapus (4 angka)</label>
+      <div class="pin">
+        <input type="password" class="mo-pin" maxlength="1" required inputmode="numeric" aria-label="PIN angka 1">
+        <input type="password" class="mo-pin" maxlength="1" required inputmode="numeric" aria-label="PIN angka 2">
+        <input type="password" class="mo-pin" maxlength="1" required inputmode="numeric" aria-label="PIN angka 3">
+        <input type="password" class="mo-pin" maxlength="1" required inputmode="numeric" aria-label="PIN angka 4">
+      </div>
+      <button type="submit" class="btn" id="btnSimpanModal">Simpan modal awal</button>
+      <button type="button" class="btn abu" onclick="tutupModalAwal()">Batal</button>
+    </form>
+    <p id="pesanErrorModal" class="galat"></p>
+  </div>
+</div>
+
 <!-- FORM CATAT -->
 <div id="formScreen" class="layar hidden">
   <div class="kotak">
@@ -329,9 +362,14 @@ input,select{min-height:48px}
         <input type="text" id="uraian" placeholder="Untuk apa? (boleh dikosongkan)">
       </div>
       <div class="fg">
-        <label for="pj">Penanggung jawab <span class="merah">*wajib</span></label>
-        <input type="text" id="pj" required list="daftarPj" autocomplete="off" placeholder="Ketik nama penanggung jawab">
+        <label for="pj">Nama penanggung jawab <span class="merah">*wajib</span></label>
+        <input type="text" id="pj" required list="daftarPj" autocomplete="off" autocapitalize="words" placeholder="Contoh: Budi Santoso">
         <datalist id="daftarPj"></datalist>
+        <div class="contohNama">
+          <b>Wajib nama asli sesuai ID card</b> (KTP / kartu pelajar), bukan nama panggilan atau singkatan.<br>
+          ✅ Contoh benar: <b>Budi Santoso</b><br>
+          ❌ Contoh salah: Budi, bud, BS, budi s.
+        </div>
         <p class="kecil">Isi nama setiap kali mencatat (tidak terisi otomatis).</p>
       </div>
       <div class="fg">
@@ -428,8 +466,9 @@ input,select{min-height:48px}
       <button type="button" onclick="tutupSidebar()" aria-label="Tutup menu">✕</button>
     </div>
     <button type="button" class="menuItem" onclick="menuLaporan()">🖨 <span>Cetak laporan<small>Mingguan, bulanan, atau satu periode</small></span></button>
+    <button type="button" class="menuItem" id="btnMenuModal" onclick="menuModal()">💰 <span>Atur modal awal<small>Uang kas awal periode ini. Perlu PIN hapus</small></span></button>
     <button type="button" class="menuItem bahaya" id="btnTutupBuku" onclick="menuReset()">📕 <span>Reset (tutup buku)<small>Ganti pengurus. Perlu PIN reset 6 angka</small></span></button>
-    <div class="sbCatatan">Wirausaha KIR TEI · v3.6</div>
+    <div class="sbCatatan">Wirausaha KIR TEI · v3.7</div>
   </aside>
 
   <div class="top">
@@ -452,6 +491,7 @@ input,select{min-height:48px}
       <div>Total masuk<b id="grandTotalPemasukan">Rp 0</b></div>
       <div>Total keluar<b id="grandTotalPengeluaran">Rp 0</b></div>
     </div>
+    <button type="button" class="btnModal" id="btnModalCepat" onclick="menuModal()">💰 Atur modal awal</button>
   </div>
 
   <div class="aksi" id="barAksi">
@@ -494,7 +534,7 @@ input,select{min-height:48px}
     <div id="daftar"><div class="kosong">Memuat data…</div></div>
   </div>
 
-  <div class="foot">Wirausaha KIR TEI · v3.6</div>
+  <div class="foot">Wirausaha KIR TEI · v3.7</div>
 </div>
 
 <div id="toast" class="hidden"></div>
@@ -548,7 +588,7 @@ const setupPin = (selector) => {
     box.addEventListener('keydown', e => { if (e.key === 'Backspace' && !box.value && i > 0) boxes[i - 1].focus(); });
   });
 };
-setupPin('.log-pin'); setupPin('.del-pin'); setupPin('.tb-pin');
+setupPin('.log-pin'); setupPin('.del-pin'); setupPin('.tb-pin'); setupPin('.mo-pin');
 const bacaPin = (selector) => [...document.querySelectorAll(selector)].map(b => b.value).join('');
 
 // Nama penanggung jawab tidak lagi disimpan: harus diisi ulang setiap kali mencatat.
@@ -565,6 +605,7 @@ const tutupSidebar = () => {
 };
 const menuLaporan = () => { tutupSidebar(); bukaLaporan(); };
 const menuReset = () => { tutupSidebar(); bukaTutupBuku(); };
+const menuModal = () => { tutupSidebar(); bukaModalAwal(); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape') tutupSidebar(); });
 
 // ================== MASUK ==================
@@ -620,8 +661,38 @@ const formatJam = (j) => {
 };
 const labelKategori = (k) => k === 'Dan Lain-Lain' ? 'Lain-lain' : k;
 const namaPj = (i) => String(i.penanggungjawab || i.pj || '').trim();
+
+// ----- Penggabungan nama penanggung jawab -----
+// Huruf besar/kecil, spasi ganda, dan tanda baca diabaikan.
+const tokenNama = (s) => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean);
+const judulNama = (s) => s.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+// Nama yang kata-katanya seluruhnya ada di nama lain yang lebih lengkap dianggap orang yang sama
+// (contoh: "budi" + "BUDI SANTOSO" + "Budi Santoso" = "Budi Santoso").
+// Bila nama pendek cocok dengan lebih dari satu orang (Budi Santoso & Budi Hartono), TIDAK digabung.
+const petaNamaPj = (daftarNama) => {
+  const hit = new Map();
+  daftarNama.forEach(n => {
+    const t = tokenNama(n); if (!t.length) return;
+    const k = t.join(' '), e = hit.get(k) || { k, t, c: 0 };
+    e.c++; hit.set(k, e);
+  });
+  const urut = [...hit.values()].sort((a, b) => (b.t.length - a.t.length) || (b.c - a.c));
+  const klaster = []; let ambigu = false;
+  urut.forEach(e => {
+    const cocok = klaster.filter(g => e.t.every(x => g.t.includes(x)));
+    if (cocok.length === 1) cocok[0].anggota.push(e.k);
+    else { if (cocok.length > 1) ambigu = true; klaster.push({ t: e.t, nama: judulNama(e.k), anggota: [e.k] }); }
+  });
+  const peta = {};
+  klaster.forEach(g => g.anggota.forEach(k => { peta[k] = g.nama; }));
+  return { peta, ambigu };
+};
+const namaGabung = (peta, n) => peta[tokenNama(n).join(' ')] || String(n || '').trim() || '(tanpa nama)';
+
 const isiDaftarPj = () => {
-  const s = new Set(dataKeuangan.map(namaPj).filter(Boolean));
+  const { peta } = petaNamaPj(dataKeuangan.map(namaPj));
+  const s = new Set(Object.values(peta));
   $('daftarPj').innerHTML = [...s].map(n => `<option value="${esc(n)}">`).join('');
 };
 
@@ -708,6 +779,8 @@ const updateUI = () => {
   // Tampilan arsip: hanya baca
   $('barAksi').classList.toggle('hidden', arsip);
   $('btnTutupBuku').classList.toggle('hidden', arsip);
+  $('btnMenuModal').classList.toggle('hidden', arsip);
+  $('btnModalCepat').classList.toggle('hidden', arsip);
   const ban = $('bannerArsip');
   ban.classList.toggle('hidden', !arsip);
   if (arsip) {
@@ -724,7 +797,7 @@ const updateUI = () => {
     if (i.jenis === 'PENGELUARAN') keluar += Number(i.jumlah) || 0;
   });
   $('saldoLabel').textContent = arsip ? 'Saldo akhir periode (arsip)' : 'Uang kas saat ini';
-  $('saldoAwalInfo').textContent = 'Saldo awal periode: ' + formatRupiah(awalPer);
+  $('saldoAwalInfo').textContent = 'Modal awal periode: ' + formatRupiah(awalPer);
   $('grandTotalPemasukan').textContent = formatRupiah(masuk);
   $('grandTotalPengeluaran').textContent = formatRupiah(keluar);
   $('grandTotalSaldo').textContent = formatRupiah(awalPer + masuk - keluar);
@@ -915,8 +988,10 @@ $('formTransaksi').addEventListener('submit', async function (e) {
   const jumlah = parseInt($('jumlah').value.replace(/\D/g, ''), 10);
   if (!jumlah) { toast('Isi jumlah lebih dari 0.'); return; }
   if (!$('transaksi').value) { toast('Pilih kategori.'); return; }
-  const pj = $('pj').value.trim();
+  const pj = $('pj').value.trim().replace(/\s+/g, ' ');
   if (!pj) { toast('Isi nama penanggung jawab.'); $('pj').focus(); return; }
+  if (/\d/.test(pj)) { toast('Nama tidak boleh berisi angka. Tulis nama asli sesuai ID card.'); $('pj').focus(); return; }
+  if (tokenNama(pj).length < 2 && !confirm('Nama hanya satu kata.\nPastikan ini sesuai ID card, bukan nama panggilan.\n\nLanjutkan menyimpan?')) { $('pj').focus(); return; }
   if (!fotoData) { toast('Foto bukti wajib diisi.'); return; }
   const btn = $('btnSubmit');
   btn.disabled = true; btn.textContent = 'Menyimpan… (tunggu, jangan ditutup)';
@@ -1080,6 +1155,47 @@ $('formTutup').addEventListener('submit', async (e) => {
     if (ok && periodeAktif.toLowerCase() === nama.toLowerCase()) { await selesaiTutup(nama); }
     else { tampilErr(x.message || 'Gagal melakukan reset. Periksa internet lalu coba lagi.'); }
   } finally { btn.disabled = false; btn.textContent = 'Reset sekarang'; }
+});
+
+// ================== MODAL AWAL ==================
+const bukaModalAwal = () => {
+  if (lihatArsip()) { toast('Arsip hanya bisa dilihat. Kembali ke periode aktif.'); return; }
+  const awal = saldoAwalPeriode(periodeAktif);
+  $('infoModal').innerHTML = `<b>${esc(periodeAktif)}</b><br>Modal awal saat ini: <b>${formatRupiah(awal)}</b>`;
+  $('formModal').reset();
+  $('modalJumlah').value = awal ? 'Rp ' + Number(awal).toLocaleString('id-ID') : '';
+  document.querySelectorAll('.mo-pin').forEach(b => b.value = '');
+  $('pesanErrorModal').style.display = 'none';
+  $('modalScreen').classList.remove('hidden');
+  setTimeout(() => $('modalJumlah').focus(), 100);
+};
+const tutupModalAwal = () => $('modalScreen').classList.add('hidden');
+
+$('modalJumlah').addEventListener('input', (e) => {
+  const d = e.target.value.replace(/\D/g, '');
+  e.target.value = d ? 'Rp ' + Number(d).toLocaleString('id-ID') : '';
+});
+
+$('formModal').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const err = $('pesanErrorModal'), btn = $('btnSimpanModal');
+  const tampilErr = (t) => { err.textContent = t; err.style.display = 'block'; };
+  const digit = $('modalJumlah').value.replace(/\D/g, '');
+  if (!digit) { tampilErr('Isi nominal modal awal.'); return; }
+  const jumlah = parseInt(digit, 10);
+  const pin = bacaPin('.mo-pin');
+  if (pin.length < 4) { tampilErr('Isi 4 angka PIN.'); return; }
+  if (!confirm(`Simpan modal awal ${formatRupiah(jumlah)} untuk ${periodeAktif}?\nSaldo kas dan semua laporan periode ini ikut berubah.`)) return;
+  btn.disabled = true; btn.textContent = 'Menyimpan…'; err.style.display = 'none';
+  try {
+    const h = await kirimJSON({ action: 'set_modal', password: pin, jumlah: jumlah, catatan: $('modalCatatan').value.trim() }, 60000);
+    if (h.status === 'success') {
+      const p = infoPeriode(periodeAktif);
+      if (p) p.saldoAwal = jumlah;
+      tutupModalAwal(); updateUI(); toast('Modal awal tersimpan ✓');
+    } else { tampilErr(h.message || 'Gagal menyimpan modal awal.'); }
+  } catch (x) { tampilErr(x.message || 'Tidak bisa terhubung. Periksa internet Anda.'); }
+  finally { btn.disabled = false; btn.textContent = 'Simpan modal awal'; }
 });
 
 // ================== LOGO EKSTRAKURIKULER ==================
@@ -1279,15 +1395,24 @@ const renderLaporan = () => {
     <table class="tb" style="max-width:520px"><thead><tr><th>Kategori</th><th>Masuk</th><th>Keluar</th></tr></thead><tbody>${katRows}</tbody></table>` : ''}
 
     ${(() => {
+      const { peta, ambigu } = petaNamaPj(valid.map(namaPj));
       const p = {};
       baris.forEach(i => {
-        const nm = namaPj(i) || '(tanpa nama)';
-        p[nm] = p[nm] || { m: 0, k: 0 };
+        const asli = namaPj(i);
+        const nm = asli ? namaGabung(peta, asli) : '(tanpa nama)';
+        p[nm] = p[nm] || { m: 0, k: 0, v: new Set() };
+        if (asli) p[nm].v.add(asli);
         if (i.jenis === 'PEMASUKAN') p[nm].m += jml(i); else if (i.jenis === 'PENGELUARAN') p[nm].k += jml(i);
       });
       const ks = Object.keys(p);
+      const baris2 = ks.map(nm => {
+        const lain = [...p[nm].v].filter(x => x !== nm);
+        const ket = lain.length ? '<br><span class="lamp">Ditulis juga: ' + lain.map(esc).join(', ') + '</span>' : '';
+        return `<tr><td>${esc(nm)}${ket}</td><td class="ang">${p[nm].m ? rp(p[nm].m) : '-'}</td><td class="ang">${p[nm].k ? rp(p[nm].k) : '-'}</td></tr>`;
+      }).join('');
       return ks.length ? `<h4>Rekap per Penanggung Jawab</h4>
-      <table class="tb" style="max-width:520px"><thead><tr><th>Penanggung Jawab</th><th>Masuk</th><th>Keluar</th></tr></thead><tbody>${ks.map(nm => `<tr><td>${esc(nm)}</td><td class="ang">${p[nm].m ? rp(p[nm].m) : '-'}</td><td class="ang">${p[nm].k ? rp(p[nm].k) : '-'}</td></tr>`).join('')}</tbody></table>` : '';
+      <table class="tb" style="max-width:520px"><thead><tr><th>Penanggung Jawab</th><th>Masuk</th><th>Keluar</th></tr></thead><tbody>${baris2}</tbody></table>
+      ${ambigu ? '<p class="cetak-info">Catatan: nama yang cocok dengan lebih dari satu orang (misalnya hanya nama depan) tidak digabung.</p>' : ''}` : '';
     })()}
 
     <h4>Rincian Transaksi</h4>
