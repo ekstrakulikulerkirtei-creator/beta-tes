@@ -22,6 +22,7 @@ textarea{min-height:84px;resize:vertical}
 .btn{display:block;width:100%;padding:14px;border:0;border-radius:10px;font-weight:700;color:#fff;background:var(--biru)}
 .btn.abu{background:#e9edf2;color:var(--teks)}
 .btn.lap{background:#fff;color:var(--biru);border:2px solid var(--biru);margin-bottom:14px}
+.btn.tutup{background:#fff;color:var(--merah);border:2px solid var(--merah);margin-bottom:14px}
 .btn:disabled{opacity:.6}
 
 /* Header */
@@ -29,10 +30,16 @@ textarea{min-height:84px;resize:vertical}
 .top h1{margin:0;font-size:22px;color:var(--biru)}
 .top button{border:1px solid var(--garis);background:#fff;border-radius:8px;padding:8px 14px}
 
+/* Periode kepengurusan */
+.periodeCard select{font-weight:600}
+.banner{background:#fff8e1;border:1px solid #ffe08a;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:14px;overflow-wrap:anywhere}
+.banner .btn{margin-top:10px;padding:10px;min-height:44px}
+
 /* Saldo */
 .saldo{background:var(--biru);color:#fff;border:0}
 .saldo small{opacity:.85}
-.saldo .angka{font-size:34px;font-weight:800;margin:2px 0 12px}
+.saldo .angka{font-size:34px;font-weight:800;margin:2px 0 4px}
+.saldo .awal{display:block;margin-bottom:10px}
 .saldo .baris{display:flex;gap:10px}
 .saldo .baris div{flex:1;background:rgba(255,255,255,.15);border-radius:8px;padding:8px 10px;font-size:14px}
 .saldo .baris b{display:block;font-size:16px}
@@ -86,6 +93,7 @@ textarea{min-height:84px;resize:vertical}
 .baris2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fg{margin-bottom:14px}
 .dataHapus{background:#fdecea;border:1px solid #f5c2c0;border-radius:8px;padding:10px 12px;margin:0 0 14px;font-size:14px;overflow-wrap:anywhere}
+.dataTutup{background:#eef4fb;border:1px solid #c9dcf3;border-radius:8px;padding:10px 12px;margin:0 0 14px;font-size:14px;overflow-wrap:anywhere}
 
 /* Foto di form */
 .fotoBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -122,6 +130,8 @@ textarea{min-height:84px;resize:vertical}
 .tb td.ang{text-align:right;white-space:nowrap}
 .tb td.c{text-align:center}
 .tb tr.tot td{font-weight:700;background:#f4f6f9}
+.tb tr.bln td{background:#e9edf2;font-weight:700}
+.tb tr.sub td{background:#f4f6f9;font-weight:700}
 .lamp{font-size:11px;color:#555}
 .ringkas-lap{width:100%;max-width:380px;font-size:13px;border-collapse:collapse}
 .ringkas-lap td{padding:3px 6px}
@@ -181,8 +191,7 @@ input,select{min-height:48px}
   #laporanScreen .wrap{max-width:none}
   #laporanDoc{border:0;border-radius:0;padding:0;overflow:visible}
   .tb tr{break-inside:avoid;page-break-inside:avoid}
-  .tb th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .tb tr.tot td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .tb th,.tb tr.tot td,.tb tr.bln td,.tb tr.sub td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
 </head>
@@ -231,6 +240,41 @@ input,select{min-height:48px}
   </div>
 </div>
 
+<!-- TUTUP BUKU / GANTI PENGURUS -->
+<div id="tutupScreen" class="layar hidden">
+  <div class="kotak">
+    <h2>Tutup buku</h2>
+    <p class="ket">Pergantian pengurus. Data periode ini tidak dihapus, tetapi disimpan sebagai arsip kepengurusan.</p>
+    <div class="dataTutup" id="infoTutup"></div>
+    <form id="formTutup">
+      <div class="fg">
+        <label for="namaBaru">Nama periode pengurus baru <span class="merah">*wajib</span></label>
+        <input type="text" id="namaBaru" required minlength="3" maxlength="60" autocomplete="off" placeholder="Contoh: Pengurus 2027/2028">
+      </div>
+      <div class="fg">
+        <label for="catatanTutup">Catatan serah terima (boleh kosong)</label>
+        <textarea id="catatanTutup" maxlength="300" placeholder="Contoh: uang kas diserahkan ke bendahara baru"></textarea>
+      </div>
+      <label class="cek"><input type="checkbox" id="bawaSaldo" checked> Bawa saldo akhir sebagai saldo awal periode baru</label>
+      <div class="fg">
+        <label for="konfirmTutup">Ketik <b>TUTUP BUKU</b> untuk konfirmasi</label>
+        <input type="text" id="konfirmTutup" required autocomplete="off" autocapitalize="characters" placeholder="TUTUP BUKU">
+      </div>
+      <label>PIN hapus (4 angka)</label>
+      <div class="pin">
+        <input type="password" class="tb-pin" maxlength="1" required inputmode="numeric" aria-label="PIN angka 1">
+        <input type="password" class="tb-pin" maxlength="1" required inputmode="numeric" aria-label="PIN angka 2">
+        <input type="password" class="tb-pin" maxlength="1" required inputmode="numeric" aria-label="PIN angka 3">
+        <input type="password" class="tb-pin" maxlength="1" required inputmode="numeric" aria-label="PIN angka 4">
+      </div>
+      <button type="button" class="btn lap" id="btnCetakDulu">🖨 Cetak laporan periode ini dulu</button>
+      <button type="submit" class="btn" style="background:var(--merah)" id="btnTutup">Tutup buku sekarang</button>
+      <button type="button" class="btn abu" onclick="tutupModalTutup()">Batal</button>
+    </form>
+    <p id="pesanErrorTutup" class="galat"></p>
+  </div>
+</div>
+
 <!-- FORM CATAT -->
 <div id="formScreen" class="layar hidden">
   <div class="kotak">
@@ -257,9 +301,9 @@ input,select{min-height:48px}
       </div>
       <div class="fg">
         <label for="pj">Penanggung jawab <span class="merah">*wajib</span></label>
-        <input type="text" id="pj" required list="daftarPj" autocomplete="off" placeholder="Nama yang bertanggung jawab">
+        <input type="text" id="pj" required list="daftarPj" autocomplete="off" placeholder="Ketik nama penanggung jawab">
         <datalist id="daftarPj"></datalist>
-        <p class="kecil">Nama terisi otomatis dari input terakhir. Ubah bila perlu.</p>
+        <p class="kecil">Isi nama setiap kali mencatat (tidak terisi otomatis).</p>
       </div>
       <div class="fg">
         <label for="tanggal">Tanggal</label>
@@ -302,6 +346,7 @@ input,select{min-height:48px}
         <select id="lapJenis">
           <option value="mingguan">Mingguan (Senin – Minggu)</option>
           <option value="bulanan">Bulanan</option>
+          <option value="periode">Seluruh bulan satu periode (laporan pertanggungjawaban)</option>
         </select>
       </div>
       <div class="fg" id="wrapMinggu">
@@ -312,6 +357,7 @@ input,select{min-height:48px}
         <label for="lapBulan">Pilih bulan</label>
         <input type="month" id="lapBulan">
       </div>
+      <p class="kecil" id="lapPeriodeInfo" style="margin:0 0 14px"></p>
       <label class="cek"><input type="checkbox" id="lapFoto" checked> Sertakan lampiran foto bukti</label>
       <div class="baris2 fg">
         <div><label for="lapKetua">Nama Ketua</label><input type="text" id="lapKetua" placeholder="Nama ketua"></div>
@@ -319,7 +365,7 @@ input,select{min-height:48px}
       </div>
       <button type="button" class="btn" id="btnCetak">🖨 Cetak / Simpan PDF</button>
       <button type="button" class="btn abu" onclick="tutupLaporan()">Tutup</button>
-      <p class="kecil">Di jendela cetak, pilih printer atau “Simpan sebagai PDF”. Tunggu semua foto tampil sebelum mencetak.</p>
+      <p class="kecil">Di jendela cetak, pilih printer atau “Simpan sebagai PDF”. Tunggu semua foto tampil sebelum mencetak. Untuk laporan satu periode, foto bisa sangat banyak: matikan lampiran foto bila ingin lebih ringan.</p>
     </div>
     <div id="laporanDoc"></div>
   </div>
@@ -333,21 +379,29 @@ input,select{min-height:48px}
     <button onclick="logout()">Keluar</button>
   </div>
 
+  <div class="card periodeCard">
+    <label for="pilihPeriode">Periode kepengurusan</label>
+    <select id="pilihPeriode" aria-label="Pilih periode kepengurusan"></select>
+  </div>
+  <div id="bannerArsip" class="banner hidden"></div>
+
   <div class="card saldo">
-    <small>Uang kas saat ini</small>
+    <small id="saldoLabel">Uang kas saat ini</small>
     <div class="angka" id="grandTotalSaldo">Rp 0</div>
+    <small class="awal" id="saldoAwalInfo"></small>
     <div class="baris">
       <div>Total masuk<b id="grandTotalPemasukan">Rp 0</b></div>
       <div>Total keluar<b id="grandTotalPengeluaran">Rp 0</b></div>
     </div>
   </div>
 
-  <div class="aksi">
+  <div class="aksi" id="barAksi">
     <button class="btn masuk" onclick="bukaForm('PEMASUKAN')">+ Uang masuk</button>
     <button class="btn keluar" onclick="bukaForm('PENGELUARAN')">− Uang keluar</button>
   </div>
 
-  <button class="btn lap" onclick="bukaLaporan()">🖨 Laporan mingguan / bulanan</button>
+  <button class="btn lap" onclick="bukaLaporan()">🖨 Laporan mingguan / bulanan / periode</button>
+  <button class="btn tutup" id="btnTutupBuku" onclick="bukaTutupBuku()">📕 Tutup buku / ganti pengurus</button>
 
   <div class="card">
     <div class="bulan-head">
@@ -384,7 +438,7 @@ input,select{min-height:48px}
     <div id="daftar"><div class="kosong">Memuat data…</div></div>
   </div>
 
-  <div class="foot">Wirausaha KIR TEI · v3.3</div>
+  <div class="foot">Wirausaha KIR TEI · v3.4</div>
 </div>
 
 <div id="toast" class="hidden"></div>
@@ -432,8 +486,11 @@ const setupPin = (selector) => {
     box.addEventListener('keydown', e => { if (e.key === 'Backspace' && !box.value && i > 0) boxes[i - 1].focus(); });
   });
 };
-setupPin('.log-pin'); setupPin('.del-pin');
+setupPin('.log-pin'); setupPin('.del-pin'); setupPin('.tb-pin');
 const bacaPin = (selector) => [...document.querySelectorAll(selector)].map(b => b.value).join('');
+
+// Nama penanggung jawab tidak lagi disimpan: harus diisi ulang setiap kali mencatat.
+try { localStorage.removeItem('lastPj'); sessionStorage.removeItem('lastPj'); } catch (x) {}
 
 // ================== MASUK ==================
 $('formLogin').addEventListener('submit', async (e) => {
@@ -454,7 +511,10 @@ const tampilkanAplikasi = () => { $('loginScreen').classList.add('hidden'); $('a
 const logout = () => { sessionStorage.removeItem('isLoggedIn'); location.reload(); };
 
 // ================== DATA ==================
-let dataKeuangan = [];
+let dataKeuangan = [];   // semua transaksi dari semua periode
+let daftarPeriode = [];  // [{nama, saldoAwal, mulai, tutup, status, ...}]
+let periodeAktif = '';   // periode kepengurusan yang sedang berjalan
+let periodeLihat = '';   // periode yang sedang dilihat (aktif atau arsip)
 const hariIni = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
 let filterBulan = hariIni().slice(0, 7);
 let filterKategori = '', searchQuery = '', itemHapusAktif = null, jenisForm = '', idForm = '';
@@ -490,22 +550,19 @@ const isiDaftarPj = () => {
   $('daftarPj').innerHTML = [...s].map(n => `<option value="${esc(n)}">`).join('');
 };
 
-// Nama penanggung jawab terakhir: disimpan di memori, localStorage, sessionStorage,
-// dan sebagai cadangan diambil dari transaksi terbaru yang punya nama PJ.
-let pjTerakhir = '';
-const simpanPjTerakhir = (nama) => {
-  nama = String(nama || '').trim();
-  if (!nama) return;
-  pjTerakhir = nama;
-  try { localStorage.setItem('lastPj', nama); } catch (x) {}
-  try { sessionStorage.setItem('lastPj', nama); } catch (x) {}
-};
-const bacaPjTerakhir = () => {
-  if (pjTerakhir) return pjTerakhir;
-  try { const v = localStorage.getItem('lastPj'); if (v) return v; } catch (x) {}
-  try { const v = sessionStorage.getItem('lastPj'); if (v) return v; } catch (x) {}
-  for (let k = dataKeuangan.length - 1; k >= 0; k--) { const n = namaPj(dataKeuangan[k]); if (n) return n; }
-  return '';
+// ----- Periode kepengurusan -----
+const infoPeriode = (nama) => daftarPeriode.find(p => p.nama === nama) || null;
+const saldoAwalPeriode = (nama) => { const p = infoPeriode(nama); return p ? (Number(p.saldoAwal) || 0) : 0; };
+const periodeItem = (i) => String(i.periode || '').trim() || periodeAktif;
+const dataPeriodeLihat = () => dataKeuangan.filter(i => periodeItem(i) === periodeLihat);
+const lihatArsip = () => periodeLihat !== periodeAktif;
+
+const isiPilihPeriode = () => {
+  const nama = daftarPeriode.length ? daftarPeriode.map(p => p.nama) : [periodeAktif];
+  const urut = [periodeAktif, ...nama.filter(n => n !== periodeAktif).reverse()];
+  $('pilihPeriode').innerHTML = urut.map(n =>
+    `<option value="${esc(n)}">${n === periodeAktif ? '● ' + esc(n) + ' (aktif)' : '📁 ' + esc(n) + ' (arsip)'}</option>`).join('');
+  $('pilihPeriode').value = periodeLihat;
 };
 
 // Alamat gambar: bisa data URL (baru difoto), link, atau ID file Google Drive
@@ -519,14 +576,26 @@ const fotoSrc = (f) => {
   return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(s) + '&sz=w1000';
 };
 
+// Mengembalikan true bila berhasil
 const muatDataOnline = async () => {
   try {
-    const res = await fetch(API_URL);
+    const res = await fetch(API_URL + '?v=2');
     const hasil = await res.json();
-    dataKeuangan = Array.isArray(hasil) ? hasil : [];
+    if (Array.isArray(hasil)) { // server lama (belum diperbarui)
+      dataKeuangan = hasil; daftarPeriode = []; periodeAktif = 'Periode berjalan';
+    } else {
+      dataKeuangan = Array.isArray(hasil.data) ? hasil.data : [];
+      daftarPeriode = Array.isArray(hasil.periode) ? hasil.periode : [];
+      periodeAktif = String(hasil.periodeAktif || 'Periode berjalan');
+    }
+    const namaAda = daftarPeriode.map(p => p.nama).concat([periodeAktif]);
+    if (!periodeLihat || !namaAda.includes(periodeLihat)) periodeLihat = periodeAktif;
+    isiPilihPeriode();
     updateUI();
+    return true;
   } catch (err) {
     $('daftar').innerHTML = '<div class="kosong merah">Gagal memuat data. Periksa internet lalu muat ulang halaman.</div>';
+    return false;
   }
 };
 
@@ -543,20 +612,42 @@ const namaBulan = (k) => {
   const p = k.split('-');
   return new Date(Number(p[0]), Number(p[1]) - 1, 1).toLocaleDateString('id-ID', { month:'long', year:'numeric' });
 };
+const bulanTerbaruPeriode = () => {
+  const ks = dataPeriodeLihat().map(bulanItem).filter(Boolean).sort();
+  return ks.length ? ks[ks.length - 1] : hariIni().slice(0, 7);
+};
 
 const updateUI = () => {
-  // Total keseluruhan
+  const data = dataPeriodeLihat();
+  const arsip = lihatArsip();
+  const infoP = infoPeriode(periodeLihat);
+  const awalPer = saldoAwalPeriode(periodeLihat);
+
+  // Tampilan arsip: hanya baca
+  $('barAksi').classList.toggle('hidden', arsip);
+  $('btnTutupBuku').classList.toggle('hidden', arsip);
+  const ban = $('bannerArsip');
+  ban.classList.toggle('hidden', !arsip);
+  if (arsip) {
+    ban.innerHTML = `📁 Anda sedang melihat <b>arsip kepengurusan</b>: ${esc(periodeLihat)}${infoP && infoP.tutup ? ' (ditutup ' + esc(infoP.tutup) + ')' : ''}.<br>Data hanya bisa dilihat dan dicetak.` +
+      (infoP && infoP.catatan ? `<br><i>Catatan: ${esc(infoP.catatan)}</i>` : '') +
+      `<button type="button" class="btn" onclick="kembaliAktif()">Kembali ke periode aktif</button>`;
+  }
+
+  // Total periode
   let masuk = 0, keluar = 0;
-  dataKeuangan.forEach(i => {
+  data.forEach(i => {
     if (i.pendingDelete) return;
     if (i.jenis === 'PEMASUKAN') masuk += Number(i.jumlah) || 0;
     if (i.jenis === 'PENGELUARAN') keluar += Number(i.jumlah) || 0;
   });
+  $('saldoLabel').textContent = arsip ? 'Saldo akhir periode (arsip)' : 'Uang kas saat ini';
+  $('saldoAwalInfo').textContent = 'Saldo awal periode: ' + formatRupiah(awalPer);
   $('grandTotalPemasukan').textContent = formatRupiah(masuk);
   $('grandTotalPengeluaran').textContent = formatRupiah(keluar);
-  $('grandTotalSaldo').textContent = formatRupiah(masuk - keluar);
+  $('grandTotalSaldo').textContent = formatRupiah(awalPer + masuk - keluar);
 
-  const semuaUrut = dataKeuangan.slice()
+  const semuaUrut = data.slice()
     .sort((a, b) => (parseDateValue(b.tanggal) - parseDateValue(a.tanggal)) || formatJam(b.jam).localeCompare(formatJam(a.jam)));
   const diBulan = semuaUrut.filter(i => filterBulan === '' || bulanItem(i) === filterBulan);
 
@@ -612,7 +703,7 @@ const updateUI = () => {
     const masukJenis = i.jenis === 'PEMASUKAN';
     const tombol = i.pendingDelete
       ? `<button id="btn-cancel-${esc(i.id)}" class="batal" onclick="batalHapus('${esc(i.id)}')">${teksTimer(i.timeLeft)}</button>`
-      : `<button class="hapus" onclick="konfirmasiHapus('${esc(i.id)}')">Hapus</button>`;
+      : (arsip ? '' : `<button class="hapus" onclick="konfirmasiHapus('${esc(i.id)}')">Hapus</button>`);
     const thumb = i.foto
       ? `<img class="thumb" src="${esc(fotoSrc(i.foto))}" alt="Foto bukti" loading="lazy" onclick="lihatFoto('${esc(i.id)}')" onerror="this.style.visibility='hidden'">`
       : '';
@@ -642,6 +733,21 @@ $('filterBulan').addEventListener('change', e => { filterBulan = e.target.value;
 $('filterKategori').addEventListener('change', e => { filterKategori = e.target.value; updateUI(); });
 $('filterRentang').addEventListener('change', e => { rentangBulan = Number(e.target.value); updateUI(); });
 $('searchInput').addEventListener('input', e => { searchQuery = e.target.value; updateUI(); });
+
+$('pilihPeriode').addEventListener('change', e => {
+  periodeLihat = e.target.value;
+  filterBulan = lihatArsip() ? bulanTerbaruPeriode() : hariIni().slice(0, 7);
+  $('filterBulan').value = filterBulan;
+  updateUI();
+});
+const kembaliAktif = () => {
+  periodeLihat = periodeAktif;
+  $('pilihPeriode').value = periodeLihat;
+  filterBulan = hariIni().slice(0, 7);
+  $('filterBulan').value = filterBulan;
+  updateUI();
+  window.scrollTo(0, 0);
+};
 
 // ================== FOTO ==================
 let fotoData = '';
@@ -697,6 +803,7 @@ $('fotoScreen').addEventListener('click', e => { if (e.target === $('fotoScreen'
 
 // ================== TAMBAH TRANSAKSI ==================
 const bukaForm = (jenis) => {
+  if (lihatArsip()) { toast('Arsip hanya bisa dilihat. Kembali ke periode aktif untuk mencatat.'); return; }
   jenisForm = jenis;
   // id dibuat sekali per formulir: kalau pengguna menekan Simpan lagi setelah sinyal putus,
   // server mengenali id yang sama dan tidak menyimpan data dobel.
@@ -709,14 +816,11 @@ const bukaForm = (jenis) => {
   resetFoto();
   $('tanggal').value = hariIni();
   isiDaftarPj();
-  $('pj').value = bacaPjTerakhir(); // nama penanggung jawab tidak hilang setelah input
+  $('pj').value = ''; // penanggung jawab selalu kosong: harus diisi ulang
   $('formScreen').classList.remove('hidden');
   setTimeout(() => $('jumlah').focus(), 100);
 };
 const tutupForm = () => $('formScreen').classList.add('hidden');
-
-// Simpan nama PJ begitu diubah, jadi tetap ada walau formulir ditutup tanpa menyimpan
-$('pj').addEventListener('change', () => simpanPjTerakhir($('pj').value));
 
 // Format Rp otomatis saat mengetik (contoh: 25000 menjadi Rp 25.000)
 $('jumlah').addEventListener('input', (e) => {
@@ -731,7 +835,6 @@ $('formTransaksi').addEventListener('submit', async function (e) {
   if (!$('transaksi').value) { toast('Pilih kategori.'); return; }
   const pj = $('pj').value.trim();
   if (!pj) { toast('Isi nama penanggung jawab.'); $('pj').focus(); return; }
-  simpanPjTerakhir(pj);
   if (!fotoData) { toast('Foto bukti wajib diisi.'); return; }
   const btn = $('btnSubmit');
   btn.disabled = true; btn.textContent = 'Menyimpan… (tunggu, jangan ditutup)';
@@ -747,7 +850,7 @@ $('formTransaksi').addEventListener('submit', async function (e) {
     pendingDelete: false
   };
   const kirim = { action: 'add', ...data, fotoData: fotoData };
-  const lokal = { ...data, foto: fotoData };
+  const lokal = { ...data, foto: fotoData, periode: periodeAktif };
   try {
     const h = await kirimJSON(kirim);
     if (h.status !== 'success') { toast(h.message || 'Gagal menyimpan. Coba lagi.'); return; }
@@ -765,6 +868,7 @@ $('formTransaksi').addEventListener('submit', async function (e) {
 
 // ================== HAPUS ==================
 const konfirmasiHapus = (id) => {
+  if (lihatArsip()) return;
   if (!id || id === 'undefined') { alert('Data ini ditambahkan manual dari Sheet, jadi tidak bisa dihapus di sini.'); return; }
   const item = dataKeuangan.find(x => String(x.id) === String(id));
   if (!item) return;
@@ -837,14 +941,74 @@ const batalHapus = (id) => {
   updateUI();
 };
 
+// ================== TUTUP BUKU / GANTI PENGURUS ==================
+const bukaTutupBuku = () => {
+  if (lihatArsip()) return;
+  const data = dataKeuangan.filter(i => periodeItem(i) === periodeAktif && !i.pendingDelete);
+  let m = 0, k = 0;
+  data.forEach(i => { if (i.jenis === 'PEMASUKAN') m += Number(i.jumlah) || 0; else if (i.jenis === 'PENGELUARAN') k += Number(i.jumlah) || 0; });
+  const awal = saldoAwalPeriode(periodeAktif);
+  $('infoTutup').innerHTML =
+    `<b>${esc(periodeAktif)}</b> (periode yang akan ditutup)<br>` +
+    `${data.length} transaksi<br>` +
+    `Saldo awal: ${formatRupiah(awal)}<br>Masuk: ${formatRupiah(m)}<br>Keluar: ${formatRupiah(k)}<br>` +
+    `<b>Saldo akhir: ${formatRupiah(awal + m - k)}</b>`;
+  $('formTutup').reset();
+  $('bawaSaldo').checked = true;
+  document.querySelectorAll('.tb-pin').forEach(b => b.value = '');
+  $('pesanErrorTutup').style.display = 'none';
+  $('tutupScreen').classList.remove('hidden');
+  setTimeout(() => $('namaBaru').focus(), 100);
+};
+const tutupModalTutup = () => $('tutupScreen').classList.add('hidden');
+
+$('btnCetakDulu').addEventListener('click', () => { tutupModalTutup(); bukaLaporan('periode'); });
+
+const selesaiTutup = async (nama) => {
+  tutupModalTutup();
+  periodeLihat = '';
+  filterBulan = hariIni().slice(0, 7); $('filterBulan').value = filterBulan;
+  await muatDataOnline();
+  window.scrollTo(0, 0);
+  toast(`Buku ditutup. Data lama menjadi arsip. Periode baru: ${nama}`);
+};
+
+$('formTutup').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const err = $('pesanErrorTutup'), btn = $('btnTutup');
+  const tampilErr = (t) => { err.textContent = t; err.style.display = 'block'; };
+  const nama = $('namaBaru').value.trim();
+  const pin = bacaPin('.tb-pin');
+  if (nama.length < 3) { tampilErr('Nama periode baru minimal 3 huruf.'); return; }
+  if (daftarPeriode.some(p => p.nama.toLowerCase() === nama.toLowerCase()) || nama.toLowerCase() === periodeAktif.toLowerCase()) { tampilErr('Nama periode sudah dipakai. Pilih nama lain.'); return; }
+  if ($('konfirmTutup').value.trim().toUpperCase() !== 'TUTUP BUKU') { tampilErr('Ketik TUTUP BUKU untuk konfirmasi.'); return; }
+  if (pin.length < 4) { tampilErr('Isi 4 angka PIN.'); return; }
+  if (dataKeuangan.some(i => i.pendingDelete)) { tampilErr('Masih ada data yang menunggu dihapus. Tunggu selesai atau batalkan dulu.'); return; }
+  btn.disabled = true; btn.textContent = 'Menutup buku… (jangan ditutup)'; err.style.display = 'none';
+  try {
+    const h = await kirimJSON({
+      action: 'tutup_buku', password: pin, namaBaru: nama, konfirmasi: 'TUTUP BUKU',
+      catatan: $('catatanTutup').value.trim(), bawaSaldo: $('bawaSaldo').checked
+    }, 120000);
+    if (h.status === 'success') { await selesaiTutup(nama); }
+    else { tampilErr(h.message || 'Gagal menutup buku.'); }
+  } catch (x) {
+    // Bisa saja sudah berhasil di server walau balasan terputus: periksa dulu sebelum menyatakan gagal
+    const ok = await muatDataOnline();
+    if (ok && periodeAktif.toLowerCase() === nama.toLowerCase()) { await selesaiTutup(nama); }
+    else { tampilErr(x.message || 'Gagal menutup buku. Periksa internet lalu coba lagi.'); }
+  } finally { btn.disabled = false; btn.textContent = 'Tutup buku sekarang'; }
+});
+
 // ================== LAPORAN ==================
 const tglPanjang = (d) => d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
 const tglPendek = (s) => { const t = parseDateValue(s); return t ? new Date(t).toLocaleDateString('id-ID', { day:'2-digit', month:'2-digit', year:'numeric' }) : '-'; };
 const rp = (n) => formatRupiah(n);
 
-const bukaLaporan = () => {
+const bukaLaporan = (mode) => {
+  if (mode) $('lapJenis').value = mode;
   if (!$('lapMinggu').value) $('lapMinggu').value = hariIni();
-  if (!$('lapBulan').value) $('lapBulan').value = filterBulan || hariIni().slice(0, 7);
+  $('lapBulan').value = filterBulan || hariIni().slice(0, 7);
   try {
     $('lapKetua').value = localStorage.getItem('lapKetua') || '';
     $('lapBendahara').value = localStorage.getItem('lapBendahara') || '';
@@ -856,35 +1020,46 @@ const bukaLaporan = () => {
 const tutupLaporan = () => $('laporanScreen').classList.add('hidden');
 
 const renderLaporan = () => {
-  const bulanan = $('lapJenis').value === 'bulanan';
-  $('wrapMinggu').classList.toggle('hidden', bulanan);
-  $('wrapBulan').classList.toggle('hidden', !bulanan);
-
-  let mulai, akhir;
-  if (bulanan) {
-    const v = $('lapBulan').value; if (!v) return;
-    const [y, m] = v.split('-').map(Number);
-    mulai = new Date(y, m - 1, 1); akhir = new Date(y, m, 0);
-  } else {
-    const v = $('lapMinggu').value; if (!v) return;
-    const [y, m, d] = v.split('-').map(Number);
-    const dow = (new Date(y, m - 1, d).getDay() + 6) % 7; // Senin = 0
-    mulai = new Date(y, m - 1, d - dow); akhir = new Date(y, m - 1, d - dow + 6);
-  }
-  const t0 = mulai.getTime(), t1 = akhir.getTime();
-  const judul = bulanan ? 'LAPORAN KEUANGAN BULANAN' : 'LAPORAN KEUANGAN MINGGUAN';
-  const periode = bulanan
-    ? 'Bulan ' + mulai.toLocaleDateString('id-ID', { month:'long', year:'numeric' })
-    : 'Periode ' + tglPanjang(mulai) + ' – ' + tglPanjang(akhir);
+  const mode = $('lapJenis').value; // mingguan | bulanan | periode
+  $('wrapMinggu').classList.toggle('hidden', mode !== 'mingguan');
+  $('wrapBulan').classList.toggle('hidden', mode !== 'bulanan');
+  $('lapPeriodeInfo').textContent = 'Kepengurusan: ' + periodeLihat + (lihatArsip() ? ' (arsip)' : ' (aktif)');
 
   const jml = (i) => Number(i.jumlah) || 0;
   const delta = (i) => i.jenis === 'PEMASUKAN' ? jml(i) : (i.jenis === 'PENGELUARAN' ? -jml(i) : 0);
-  const valid = dataKeuangan.filter(i => !i.pendingDelete && parseDateValue(i.tanggal));
+  const valid = dataPeriodeLihat().filter(i => !i.pendingDelete && parseDateValue(i.tanggal));
   const urut = (a, b) => (parseDateValue(a.tanggal) - parseDateValue(b.tanggal)) || formatJam(a.jam).localeCompare(formatJam(b.jam));
 
-  let saldoAwal = 0;
-  valid.forEach(i => { if (parseDateValue(i.tanggal) < t0) saldoAwal += delta(i); });
-  const baris = valid.filter(i => { const t = parseDateValue(i.tanggal); return t >= t0 && t <= t1; }).sort(urut);
+  let judul, periode, saldoAwal = saldoAwalPeriode(periodeLihat), baris;
+
+  if (mode === 'periode') {
+    // Seluruh bulan dalam satu kepengurusan
+    baris = valid.slice().sort(urut);
+    judul = 'LAPORAN PERTANGGUNGJAWABAN KEUANGAN';
+    const ts = baris.map(i => parseDateValue(i.tanggal));
+    periode = ts.length
+      ? 'Masa ' + tglPanjang(new Date(Math.min(...ts))) + ' – ' + tglPanjang(new Date(Math.max(...ts)))
+      : 'Belum ada transaksi';
+  } else {
+    let mulai, akhir;
+    if (mode === 'bulanan') {
+      const v = $('lapBulan').value; if (!v) return;
+      const [y, m] = v.split('-').map(Number);
+      mulai = new Date(y, m - 1, 1); akhir = new Date(y, m, 0);
+    } else {
+      const v = $('lapMinggu').value; if (!v) return;
+      const [y, m, d] = v.split('-').map(Number);
+      const dow = (new Date(y, m - 1, d).getDay() + 6) % 7; // Senin = 0
+      mulai = new Date(y, m - 1, d - dow); akhir = new Date(y, m - 1, d - dow + 6);
+    }
+    const t0 = mulai.getTime(), t1 = akhir.getTime();
+    judul = mode === 'bulanan' ? 'LAPORAN KEUANGAN BULANAN' : 'LAPORAN KEUANGAN MINGGUAN';
+    periode = mode === 'bulanan'
+      ? 'Bulan ' + mulai.toLocaleDateString('id-ID', { month:'long', year:'numeric' })
+      : 'Periode ' + tglPanjang(mulai) + ' – ' + tglPanjang(akhir);
+    valid.forEach(i => { if (parseDateValue(i.tanggal) < t0) saldoAwal += delta(i); });
+    baris = valid.filter(i => { const t = parseDateValue(i.tanggal); return t >= t0 && t <= t1; }).sort(urut);
+  }
 
   let tm = 0, tk = 0;
   baris.forEach(i => { if (i.jenis === 'PEMASUKAN') tm += jml(i); else if (i.jenis === 'PENGELUARAN') tk += jml(i); });
@@ -898,11 +1073,39 @@ const renderLaporan = () => {
     if (i.jenis === 'PEMASUKAN') kat[k].m += jml(i); else if (i.jenis === 'PENGELUARAN') kat[k].k += jml(i);
   });
 
-  let run = saldoAwal;
-  const rows = baris.map((i, n) => {
+  // Rekap per bulan (hanya laporan satu periode)
+  const bagianBulan = mode === 'periode' ? (() => {
+    const pb = {};
+    baris.forEach(i => {
+      const kb = bulanItem(i);
+      pb[kb] = pb[kb] || { m: 0, k: 0 };
+      if (i.jenis === 'PEMASUKAN') pb[kb].m += jml(i); else if (i.jenis === 'PENGELUARAN') pb[kb].k += jml(i);
+    });
+    const ks = Object.keys(pb).sort();
+    let s = saldoAwal;
+    const trs = ks.map(kb => {
+      const aw = s; s += pb[kb].m - pb[kb].k;
+      return `<tr><td>${esc(namaBulan(kb))}</td><td class="ang">${rp(aw)}</td><td class="ang">${rp(pb[kb].m)}</td><td class="ang">${rp(pb[kb].k)}</td><td class="ang">${rp(s)}</td></tr>`;
+    }).join('');
+    return ks.length ? `<h4>Rekap per Bulan</h4>
+      <table class="tb"><thead><tr><th>Bulan</th><th>Saldo awal</th><th>Masuk</th><th>Keluar</th><th>Saldo akhir</th></tr></thead><tbody>${trs}</tbody></table>` : '';
+  })() : '';
+
+  // Rincian transaksi (laporan satu periode dikelompokkan per bulan dengan subjumlah)
+  let run = saldoAwal, kunci = null, sm = 0, sk = 0, rowsHtml = '';
+  const tutupBulan = () => {
+    if (kunci === null) return;
+    rowsHtml += `<tr class="sub"><td colspan="4" class="ang">Jumlah ${esc(namaBulan(kunci))}</td><td class="ang">${rp(sm)}</td><td class="ang">${rp(sk)}</td><td class="ang">${rp(run)}</td></tr>`;
+  };
+  baris.forEach((i, n) => {
+    if (mode === 'periode') {
+      const kb = bulanItem(i);
+      if (kb !== kunci) { tutupBulan(); kunci = kb; sm = 0; sk = 0; rowsHtml += `<tr class="bln"><td colspan="7">${esc(namaBulan(kb))}</td></tr>`; }
+    }
     run += delta(i);
     const m = i.jenis === 'PEMASUKAN', k = i.jenis === 'PENGELUARAN';
-    return `<tr>
+    if (m) sm += jml(i); if (k) sk += jml(i);
+    rowsHtml += `<tr>
       <td class="c">${n + 1}</td>
       <td>${tglPendek(i.tanggal)}</td>
       <td>${esc(i.uraian || labelKategori(i.transaksi))}${i.foto ? ' <span class="lamp">(foto no. ' + (n + 1) + ')</span>' : ''}${namaPj(i) ? '<br><span class="lamp">PJ: ' + esc(namaPj(i)) + '</span>' : ''}</td>
@@ -911,7 +1114,8 @@ const renderLaporan = () => {
       <td class="ang">${k ? rp(jml(i)) : ''}</td>
       <td class="ang">${rp(run)}</td>
     </tr>`;
-  }).join('');
+  });
+  if (mode === 'periode') tutupBulan();
 
   const katRows = Object.keys(kat).map(k =>
     `<tr><td>${esc(k)}</td><td class="ang">${kat[k].m ? rp(kat[k].m) : '-'}</td><td class="ang">${kat[k].k ? rp(kat[k].k) : '-'}</td></tr>`
@@ -930,7 +1134,7 @@ const renderLaporan = () => {
   const ketua = $('lapKetua').value.trim(), bendahara = $('lapBendahara').value.trim();
 
   $('laporanDoc').innerHTML = `
-    <div class="kop"><h3>WIRAUSAHA KIR TEI</h3><div class="jdl">${judul}</div><div class="per">${esc(periode)}</div></div>
+    <div class="kop"><h3>WIRAUSAHA KIR TEI</h3><div class="jdl">${judul}</div><div class="per">${esc(periode)}</div><div class="per">Kepengurusan: ${esc(periodeLihat)}</div></div>
 
     <h4>Ringkasan</h4>
     <table class="ringkas-lap">
@@ -939,6 +1143,8 @@ const renderLaporan = () => {
       <tr><td>Total uang keluar</td><td>${rp(tk)}</td></tr>
       <tr class="garis"><td>Saldo akhir</td><td>${rp(saldoAkhir)}</td></tr>
     </table>
+
+    ${bagianBulan}
 
     ${katRows ? `<h4>Rekap per Kategori</h4>
     <table class="tb" style="max-width:520px"><thead><tr><th>Kategori</th><th>Masuk</th><th>Keluar</th></tr></thead><tbody>${katRows}</tbody></table>` : ''}
@@ -960,11 +1166,11 @@ const renderLaporan = () => {
       <thead><tr><th style="width:30px">No</th><th style="width:78px">Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Masuk</th><th>Keluar</th><th>Saldo</th></tr></thead>
       <tbody>
         <tr><td></td><td></td><td colspan="4"><i>Saldo awal</i></td><td class="ang">${rp(saldoAwal)}</td></tr>
-        ${rows || '<tr><td colspan="7" class="c">Tidak ada transaksi pada periode ini.</td></tr>'}
+        ${rowsHtml || '<tr><td colspan="7" class="c">Tidak ada transaksi pada periode ini.</td></tr>'}
         <tr class="tot"><td colspan="4" class="ang">Jumlah</td><td class="ang">${rp(tm)}</td><td class="ang">${rp(tk)}</td><td class="ang">${rp(saldoAkhir)}</td></tr>
       </tbody>
     </table>
-    ${denganFoto && tanpa ? `<p class="cetak-info">Catatan: ${tanpa} transaksi pada periode ini belum memiliki foto bukti.</p>` : ''}
+    ${denganFoto && tanpa ? `<p class="cetak-info">Catatan: ${tanpa} transaksi pada laporan ini belum memiliki foto bukti.</p>` : ''}
 
     <div class="ttd">
       <div>Mengetahui,<br>Ketua<div class="nama">${esc(ketua)}</div></div>
