@@ -1,4 +1,21 @@
 <!DOCTYPE html>
+<!--
+  Keuangan Wirausaha KIR TEI
+  VERSI TERBARU : v3.9.2 (22 November 2026)
+  PERUBAHAN v3.9.2: Cetak laporan: "Mengetahui / tanda tangan" selalu di dasar HALAMAN TERAKHIR
+                   (juga bila laporan lebih dari 1 halaman). Jarak dari catatan kendala bisa diatur
+                   (5 - 120 mm) lewat menu Cetak laporan, ada pilihan "Tanda tangan di dasar kertas".
+  RIWAYAT       : v3.9.1 Tanda tangan didorong ke dasar kertas, versi ikut tercetak
+                  v3.9   Sidebar berisi periode + Keluar, catatan kendala di laporan
+                  v3.8   Kotak konfirmasi dalam aplikasi, catatan modal awal wajib
+                  v3.7   Modal awal, penggabungan nama penanggung jawab, keterangan nama asli
+
+  ATURAN NOMOR VERSI (format  utama.fitur.perbaikan):
+    angka ke-3  3.9.1 -> 3.9.2   perbaikan / penyesuaian kecil (tampilan, jarak, teks)
+    angka ke-2  3.9.2 -> 3.10.0  fitur baru (angka ke-3 kembali ke 0)
+    angka ke-1  3.10.0 -> 4.0.0  perubahan besar
+  Cara mengganti: ubah VERSI_UTAMA, VERSI_FITUR, VERSI_PERBAIKAN, VERSI_TGL, VERSI_KET (cari: VERSI_UTAMA di bagian script).
+-->
 <html lang="id">
 <head>
 <meta charset="UTF-8">
@@ -25,10 +42,11 @@ textarea{min-height:84px;resize:vertical}
 .btn:disabled{opacity:.6}
 
 /* Header */
-.top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.top h1{flex:1;margin:0;font-size:22px;color:var(--biru)}
-.top button{border:1px solid var(--garis);background:#fff;border-radius:8px;padding:8px 14px}
-.top .btnMenu{width:46px;height:46px;padding:0;font-size:24px;line-height:1;color:var(--biru);flex-shrink:0}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.top h1{flex:1;margin:0;font-size:20px;line-height:1.2;color:var(--biru)}
+.top .btnMenu{width:46px;height:46px;padding:0;font-size:24px;line-height:1;color:var(--biru);flex-shrink:0;border:1px solid var(--garis);background:#fff;border-radius:8px}
+.periodeTag{display:block;width:100%;text-align:left;border:1px solid var(--garis);background:#fff;border-radius:10px;
+  padding:10px 12px;margin:0 0 14px;font-weight:600;color:var(--biru);overflow-wrap:anywhere}
 
 /* Sidebar */
 #sidebarOverlay{position:fixed;inset:0;background:rgba(20,30,45,.5);z-index:40}
@@ -41,14 +59,19 @@ textarea{min-height:84px;resize:vertical}
 .sbHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .sbHead b{font-size:19px;color:var(--biru)}
 .sbHead button{border:0;background:var(--bg);border-radius:8px;width:42px;height:42px;font-size:20px}
+.sbPeriode{background:var(--bg);border-radius:10px;padding:12px;margin-bottom:14px}
+.sbPeriode label{font-size:13px;color:var(--abu);margin-bottom:6px}
+.sbPeriode select{font-weight:600}
 .menuItem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:14px;margin-bottom:10px;
   border:1px solid var(--garis);background:#fff;border-radius:10px;font-weight:700;color:var(--biru);min-height:54px}
 .menuItem.bahaya{color:var(--merah);border-color:#f0b4b4}
+.menuItem.keluar{color:var(--teks);background:var(--bg)}
 .menuItem small{display:block;font-weight:400;color:var(--abu);font-size:12px}
-.sbCatatan{font-size:12px;color:var(--abu);margin-top:auto;padding-top:14px}
+.sbBawah{margin-top:auto;padding-top:14px}
+.sbCatatan{font-size:12px;color:var(--abu);text-align:center;line-height:1.5}
+.sbCatatan b{color:var(--biru)}
 
-/* Periode kepengurusan */
-.periodeCard select{font-weight:600}
+/* Banner arsip */
 .banner{background:#fff8e1;border:1px solid #ffe08a;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:14px;overflow-wrap:anywhere}
 .banner .btn{margin-top:10px;padding:10px;min-height:44px}
 
@@ -134,13 +157,15 @@ textarea{min-height:84px;resize:vertical}
 
 /* Pemberitahuan singkat */
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1f2933;color:#fff;padding:12px 20px;border-radius:10px;z-index:99;max-width:90%}
-.foot{text-align:center;color:#98a2b3;font-size:12px;margin:18px 0 6px}
+.foot{text-align:center;color:#98a2b3;font-size:12px;margin:18px 0 6px;line-height:1.5}
 
 /* ============ LAPORAN ============ */
 #laporanScreen{display:block;overflow:auto;z-index:60;align-items:flex-start}
 #laporanScreen .wrap{max-width:820px}
 .cek{display:flex;align-items:center;gap:10px;font-weight:600;margin:0 0 14px}
 .cek input{width:22px;height:22px;flex-shrink:0}
+.rentangCetak{display:flex;align-items:center;gap:10px}
+.rentangCetak input[type=range]{flex:1;min-height:36px;padding:0;border:0;background:none}
 .logoWrap{display:flex;align-items:center;gap:12px;margin-top:8px}
 .logoWrap img{width:56px;height:56px;object-fit:contain;border:1px solid var(--garis);border-radius:8px;background:#fff}
 #laporanDoc{background:#fff;border:1px solid var(--garis);border-radius:8px;padding:22px;font-size:13px;color:#000;overflow-x:auto}
@@ -151,7 +176,7 @@ textarea{min-height:84px;resize:vertical}
 .kop h3{margin:0;font-size:20px;letter-spacing:1px}
 .kop .jdl{font-size:16px;font-weight:700;margin-top:4px}
 .kop .per{font-size:13px;margin-top:2px}
-#laporanDoc h4{margin:16px 0 6px;font-size:14px}
+#laporanDoc h4,#laporanProbe h4{margin:16px 0 6px;font-size:14px}
 .tb{width:100%;border-collapse:collapse;font-size:12px}
 .tb th,.tb td{border:1px solid #777;padding:4px 6px;vertical-align:top}
 .tb th{background:#e9edf2;text-align:center}
@@ -169,9 +194,16 @@ textarea{min-height:84px;resize:vertical}
 .galeri figure{margin:0;border:1px solid #999;padding:6px;break-inside:avoid;page-break-inside:avoid}
 .galeri img{width:100%;height:230px;object-fit:contain;background:#f4f6f9;display:block}
 .galeri figcaption{font-size:11px;margin-top:4px}
-.ttd{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;text-align:center;margin-top:28px;break-inside:avoid;page-break-inside:avoid}
+.penutup{break-inside:avoid;page-break-inside:avoid}
+/* Jarak catatan kendala ke tanda tangan = variabel --jarak (diatur lewat menu Cetak laporan) */
+.kendala{margin-top:14px;margin-bottom:var(--jarak,22mm);font-size:12px;white-space:pre-line;overflow-wrap:anywhere}
+.ttd{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;text-align:center;margin-top:0;break-inside:avoid;page-break-inside:avoid}
 .ttd .nama{margin-top:64px;font-weight:700;text-decoration:underline;min-height:1.2em;overflow-wrap:anywhere}
 .cetak-info{font-size:11px;color:#555;margin-top:14px}
+
+/* Salinan tak terlihat untuk menghitung jumlah halaman cetak (lebar isi A4 = 210 - 28 = 182 mm) */
+#laporanProbe{position:absolute;left:-10000px;top:0;width:182mm;font-size:13px;color:#000;visibility:hidden;pointer-events:none}
+#laporanProbe .galeri{grid-template-columns:repeat(2,1fr)}
 
 /* ===== Android / layar sempit ===== */
 html{-webkit-text-size-adjust:100%}
@@ -221,6 +253,18 @@ input,select{min-height:48px}
   .tb tr{break-inside:avoid;page-break-inside:avoid}
   .tb th,.tb tr.tot td,.tb tr.bln td,.tb tr.sub td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .kop .logoKop{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+  /* v3.9.2: tanda tangan di dasar HALAMAN TERAKHIR.
+     --tinggiCetak = jumlah halaman x 268 mm, dihitung otomatis oleh script (hitungTinggiCetak).
+     268 mm = tinggi isi satu halaman A4 (297 mm dikurangi margin 28 mm) dikurangi cadangan 1 mm.
+     Jarak minimal catatan kendala ke tanda tangan = --jarak (diatur lewat menu Cetak laporan). */
+  #laporanDoc{display:flex;flex-direction:column;min-height:var(--tinggiCetak,268mm)}
+  #laporanDoc>*{flex-shrink:0}
+  .penutup{flex:1 1 auto;display:flex;flex-direction:column}
+  .penutup .ttd{margin-top:auto}
+  /* Pilihan "Tanda tangan di dasar kertas" dimatikan: tanda tangan tepat setelah catatan kendala */
+  #laporanDoc.ttdIkut{min-height:0}
+  #laporanDoc.ttdIkut .penutup .ttd{margin-top:0}
 }
 </style>
 </head>
@@ -437,6 +481,19 @@ input,select{min-height:48px}
       <p class="kecil" id="lapPeriodeInfo" style="margin:0 0 14px"></p>
       <label class="cek"><input type="checkbox" id="lapFoto" checked> Sertakan lampiran foto bukti</label>
       <div class="fg">
+        <label for="lapKendala">Catatan kendala (tampil di laporan cetak)</label>
+        <textarea id="lapKendala" maxlength="600" placeholder="Contoh: anggota belum membawa nota; barang habis lebih awal. Kosongkan bila tidak ada."></textarea>
+        <p class="kecil">Tersimpan di perangkat ini, terpisah untuk tiap laporan (minggu, bulan, atau periode). Bila kosong, tercetak “Catatan kendala : -”.</p>
+      </div>
+      <div class="fg">
+        <label class="cek" style="margin-bottom:10px"><input type="checkbox" id="lapTtdDasar" checked> Tanda tangan di dasar kertas</label>
+        <label for="lapJarak">Jarak catatan kendala ke tanda tangan: <b id="lapJarakNilai">22 mm</b></label>
+        <div class="rentangCetak">
+          <input type="range" id="lapJarak" min="5" max="120" step="1" value="22" aria-label="Jarak catatan kendala ke tanda tangan (mm)">
+        </div>
+        <p class="kecil">Aktif: tanda tangan selalu di dasar halaman terakhir, jarak ini adalah jarak minimal. Nonaktif: tanda tangan tepat sejauh jarak ini di bawah catatan kendala. Pengaturan tersimpan di perangkat ini.</p>
+      </div>
+      <div class="fg">
         <label for="lapPembina">Nama Pembina</label>
         <input type="text" id="lapPembina" placeholder="Nama pembina (mengetahui)">
       </div>
@@ -475,22 +532,28 @@ input,select{min-height:48px}
       <b>Menu</b>
       <button type="button" onclick="tutupSidebar()" aria-label="Tutup menu">✕</button>
     </div>
+
+    <div class="sbPeriode">
+      <label for="pilihPeriode">Periode kepengurusan</label>
+      <select id="pilihPeriode" aria-label="Pilih periode kepengurusan"></select>
+    </div>
+
     <button type="button" class="menuItem" onclick="menuLaporan()">🖨 <span>Cetak laporan<small>Mingguan, bulanan, atau satu periode</small></span></button>
     <button type="button" class="menuItem" id="btnMenuModal" onclick="menuModal()">💰 <span>Atur modal awal<small>Uang kas awal periode ini. Perlu PIN hapus</small></span></button>
     <button type="button" class="menuItem bahaya" id="btnTutupBuku" onclick="menuReset()">📕 <span>Reset (tutup buku)<small>Ganti pengurus. Perlu PIN reset 6 angka</small></span></button>
-    <div class="sbCatatan">Wirausaha KIR TEI · v3.8</div>
+
+    <div class="sbBawah">
+      <button type="button" class="menuItem keluar" onclick="logout()">🚪 <span>Keluar<small>Kembali ke layar PIN</small></span></button>
+      <div class="sbCatatan">Keuangan Wirausaha KIR TEI<br><b class="verApp"></b><br><span class="verKet"></span></div>
+    </div>
   </aside>
 
   <div class="top">
     <button type="button" class="btnMenu" id="btnMenu" onclick="bukaSidebar()" aria-label="Buka menu">☰</button>
-    <h1>Keuangan KIR TEI</h1>
-    <button onclick="logout()">Keluar</button>
+    <h1>Keuangan Wirausaha KIR TEI</h1>
   </div>
 
-  <div class="card periodeCard">
-    <label for="pilihPeriode">Periode kepengurusan</label>
-    <select id="pilihPeriode" aria-label="Pilih periode kepengurusan"></select>
-  </div>
+  <button type="button" class="periodeTag" id="periodeTag" onclick="bukaSidebar()" aria-label="Ganti periode kepengurusan">Memuat periode…</button>
   <div id="bannerArsip" class="banner hidden"></div>
 
   <div class="card saldo">
@@ -543,14 +606,28 @@ input,select{min-height:48px}
     <div id="daftar"><div class="kosong">Memuat data…</div></div>
   </div>
 
-  <div class="foot">Wirausaha KIR TEI · v3.8</div>
+  <div class="foot">Keuangan Wirausaha KIR TEI · <b class="verApp"></b><br><span class="verKet"></span></div>
 </div>
 
 <div id="toast" class="hidden"></div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzZV7cezuIMDd4My-6w5gRVS8GsWeMUXlL2oc_iofVlJTnbWW38pFgFwCx9dbbzV37g7w/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwOtH0MSbkyZLIcQaLlnndjvjhOq9AXU-ncUHrnKgOSJCV6OHZ2fyME7aQzFg88gvqt6A/exec";
 const WAKTU_HAPUS = 10; // detik menunggu sebelum data benar-benar dihapus
+
+// ===== VERSI APLIKASI (tampil di menu samping, bagian bawah halaman, dan laporan cetak) =====
+// Format utama.fitur.perbaikan:
+//   perbaikan / penyesuaian kecil -> naikkan VERSI_PERBAIKAN   (3.9.2 -> 3.9.3)
+//   fitur baru                    -> naikkan VERSI_FITUR, VERSI_PERBAIKAN kembali ke 0   (3.9.3 -> 3.10.0)
+//   perubahan besar               -> naikkan VERSI_UTAMA, dua angka lain kembali ke 0    (3.10.0 -> 4.0.0)
+// Lalu isi VERSI_TGL dan tulis ringkas perubahannya di VERSI_KET.
+const VERSI_UTAMA = 3;
+const VERSI_FITUR = 9;
+const VERSI_PERBAIKAN = 2;
+const VERSI_TGL = '22 Nov 2026';
+const VERSI_KET = 'Cetak: jarak tanda tangan bisa diatur';
+const VERSI_NO = 'v' + VERSI_UTAMA + '.' + VERSI_FITUR + '.' + VERSI_PERBAIKAN; // contoh: v3.9.2
+const VERSI_APP = VERSI_NO + ' · ' + VERSI_TGL;
 
 // LOGO EKSTRAKURIKULER (tampil di kop laporan cetak).
 // Cara tetap untuk semua perangkat: isi dengan alamat file logo di folder yang sama dengan index.html
@@ -560,6 +637,9 @@ const LOGO_BAWAAN = '';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+document.querySelectorAll('.verApp').forEach(e => { e.textContent = VERSI_APP; });
+document.querySelectorAll('.verKet').forEach(e => { e.textContent = VERSI_KET; });
 
 // Kirim ke server. Selalu mengembalikan objek JSON, atau melempar error dengan pesan yang jelas.
 const kirimJSON = async (data, batas = 90000) => {
@@ -799,6 +879,9 @@ const updateUI = () => {
   const infoP = infoPeriode(periodeLihat);
   const awalPer = saldoAwalPeriode(periodeLihat);
 
+  // Penanda periode di halaman utama (pilihan periode ada di sidebar)
+  $('periodeTag').textContent = (arsip ? '📁 Arsip: ' : '● Periode: ') + (periodeLihat || '…') + ' ▾';
+
   // Tampilan arsip: hanya baca
   $('barAksi').classList.toggle('hidden', arsip);
   $('btnTutupBuku').classList.toggle('hidden', arsip);
@@ -916,6 +999,8 @@ $('pilihPeriode').addEventListener('change', e => {
   filterBulan = lihatArsip() ? bulanTerbaruPeriode() : hariIni().slice(0, 7);
   $('filterBulan').value = filterBulan;
   updateUI();
+  tutupSidebar();
+  window.scrollTo(0, 0);
 });
 const kembaliAktif = () => {
   periodeLihat = periodeAktif;
@@ -1268,6 +1353,67 @@ $('btnHapusLogo').addEventListener('click', () => {
   segarkanLogoUI(); renderLaporan();
 });
 
+// ================== CATATAN KENDALA (tampil di laporan cetak) ==================
+// Disimpan per laporan: periode kepengurusan + jenis laporan + minggu/bulan yang dipilih.
+let kunciKendalaAktif = null;
+const bacaKendala = (k) => { try { return localStorage.getItem(k) || ''; } catch (x) { return ''; } };
+const simpanKendala = (k, v) => { try { if (v.trim()) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (x) {} };
+$('lapKendala').addEventListener('input', () => {
+  if (kunciKendalaAktif) simpanKendala(kunciKendalaAktif, $('lapKendala').value);
+  renderLaporan();
+});
+
+// ================== TATA LETAK CETAK: TANDA TANGAN DI DASAR HALAMAN ==================
+const JARAK_BAWAAN_MM = 22;   // jarak awal catatan kendala ke tanda tangan
+const MM_KE_PX = 96 / 25.4;
+const TINGGI_ISI_HALAMAN_MM = 268;  // tinggi isi satu halaman A4 (297 - margin 28 = 269) dikurangi cadangan 1 mm
+const TINGGI_HITUNG_MM = 270;       // dipakai untuk menaksir jumlah halaman (sedikit longgar agar tidak kelebihan halaman kosong)
+
+const bacaJarakTtd = () => {
+  try { const v = Number(localStorage.getItem('ttdJarak')); return v >= 5 && v <= 120 ? v : JARAK_BAWAAN_MM; }
+  catch (x) { return JARAK_BAWAAN_MM; }
+};
+const bacaTtdDasar = () => { try { return localStorage.getItem('ttdDasar') !== '0'; } catch (x) { return true; } };
+
+// Taksir jumlah halaman cetak memakai salinan tak terlihat selebar isi A4 (182 mm),
+// lalu atur tinggi minimum dokumen = jumlah halaman x 268 mm, sehingga tanda tangan menempel di dasar halaman terakhir.
+const hitungTinggiCetak = () => {
+  const doc = $('laporanDoc');
+  if (!doc || !doc.firstElementChild) return;
+  const probe = document.createElement('div');
+  probe.id = 'laporanProbe';
+  // Gambar tidak perlu dimuat lagi (tinggi gambar sudah tetap lewat CSS)
+  probe.innerHTML = doc.innerHTML.replace(/(<img\b[^>]*?)\ssrc="[^"]*"/g, '$1 src="data:image/gif;base64,R0lGODlhAQABAAAAACw="');
+  document.body.appendChild(probe);
+  const tinggi = probe.offsetHeight;
+  probe.remove();
+  const halaman = Math.max(1, Math.ceil(tinggi / (TINGGI_HITUNG_MM * MM_KE_PX)));
+  doc.style.setProperty('--tinggiCetak', (halaman * TINGGI_ISI_HALAMAN_MM) + 'mm');
+};
+
+// Terapkan pengaturan jarak dan posisi tanda tangan ke dokumen laporan
+const terapkanTataCetak = () => {
+  const doc = $('laporanDoc');
+  const jarak = Math.min(120, Math.max(5, Number($('lapJarak').value) || JARAK_BAWAAN_MM));
+  $('lapJarakNilai').textContent = jarak + ' mm';
+  doc.style.setProperty('--jarak', jarak + 'mm');
+  doc.classList.toggle('ttdIkut', !$('lapTtdDasar').checked);
+  hitungTinggiCetak();
+};
+
+$('lapJarak').addEventListener('input', () => {
+  try { localStorage.setItem('ttdJarak', $('lapJarak').value); } catch (x) {}
+  terapkanTataCetak();
+});
+$('lapTtdDasar').addEventListener('change', () => {
+  try { localStorage.setItem('ttdDasar', $('lapTtdDasar').checked ? '1' : '0'); } catch (x) {}
+  terapkanTataCetak();
+});
+// Hitung ulang tepat sebelum jendela cetak terbuka
+window.addEventListener('beforeprint', () => {
+  if (!$('laporanScreen').classList.contains('hidden')) terapkanTataCetak();
+});
+
 // ================== LAPORAN ==================
 const tglPanjang = (d) => d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
 const tglPendek = (s) => { const t = parseDateValue(s); return t ? new Date(t).toLocaleDateString('id-ID', { day:'2-digit', month:'2-digit', year:'numeric' }) : '-'; };
@@ -1282,6 +1428,9 @@ const bukaLaporan = (mode) => {
     $('lapKetua').value = localStorage.getItem('lapKetua') || '';
     $('lapBendahara').value = localStorage.getItem('lapBendahara') || '';
   } catch (x) {}
+  $('lapJarak').value = bacaJarakTtd();
+  $('lapTtdDasar').checked = bacaTtdDasar();
+  kunciKendalaAktif = null; // muat ulang catatan kendala sesuai laporan yang dipilih
   segarkanLogoUI();
   $('laporanScreen').classList.remove('hidden');
   $('laporanScreen').scrollTop = 0;
@@ -1300,12 +1449,13 @@ const renderLaporan = () => {
   const valid = dataPeriodeLihat().filter(i => !i.pendingDelete && parseDateValue(i.tanggal));
   const urut = (a, b) => (parseDateValue(a.tanggal) - parseDateValue(b.tanggal)) || formatJam(a.jam).localeCompare(formatJam(b.jam));
 
-  let judul, periode, saldoAwal = saldoAwalPeriode(periodeLihat), baris;
+  let judul, periode, kunciRentang, saldoAwal = saldoAwalPeriode(periodeLihat), baris;
 
   if (mode === 'periode') {
     // Seluruh bulan dalam satu kepengurusan
     baris = valid.slice().sort(urut);
     judul = 'LAPORAN PERTANGGUNGJAWABAN KEUANGAN';
+    kunciRentang = 'semua';
     const ts = baris.map(i => parseDateValue(i.tanggal));
     periode = ts.length
       ? 'Masa ' + tglPanjang(new Date(Math.min(...ts))) + ' – ' + tglPanjang(new Date(Math.max(...ts)))
@@ -1316,11 +1466,13 @@ const renderLaporan = () => {
       const v = $('lapBulan').value; if (!v) return;
       const [y, m] = v.split('-').map(Number);
       mulai = new Date(y, m - 1, 1); akhir = new Date(y, m, 0);
+      kunciRentang = v;
     } else {
       const v = $('lapMinggu').value; if (!v) return;
       const [y, m, d] = v.split('-').map(Number);
       const dow = (new Date(y, m - 1, d).getDay() + 6) % 7; // Senin = 0
       mulai = new Date(y, m - 1, d - dow); akhir = new Date(y, m - 1, d - dow + 6);
+      kunciRentang = mulai.getFullYear() + '-' + String(mulai.getMonth() + 1).padStart(2, '0') + '-' + String(mulai.getDate()).padStart(2, '0');
     }
     const t0 = mulai.getTime(), t1 = akhir.getTime();
     judul = mode === 'bulanan' ? 'LAPORAN KEUANGAN BULANAN' : 'LAPORAN KEUANGAN MINGGUAN';
@@ -1330,6 +1482,11 @@ const renderLaporan = () => {
     valid.forEach(i => { if (parseDateValue(i.tanggal) < t0) saldoAwal += delta(i); });
     baris = valid.filter(i => { const t = parseDateValue(i.tanggal); return t >= t0 && t <= t1; }).sort(urut);
   }
+
+  // Catatan kendala: dimuat dari penyimpanan saat jenis laporan / minggu / bulan / periode berganti
+  const kunciK = 'kendala|' + periodeLihat + '|' + mode + '|' + kunciRentang;
+  if (kunciK !== kunciKendalaAktif) { kunciKendalaAktif = kunciK; $('lapKendala').value = bacaKendala(kunciK); }
+  const kendala = $('lapKendala').value.trim();
 
   let tm = 0, tk = 0;
   baris.forEach(i => { if (i.jenis === 'PEMASUKAN') tm += jml(i); else if (i.jenis === 'PENGELUARAN') tk += jml(i); });
@@ -1394,7 +1551,7 @@ const renderLaporan = () => {
   const denganFoto = $('lapFoto').checked;
   const berFoto = baris.map((i, n) => ({ i, no: n + 1 })).filter(x => x.i.foto);
   const galeri = (denganFoto && berFoto.length) ? `
-    <h4 style="break-before:page;page-break-before:always">Lampiran Foto Bukti</h4>
+    <h4 style="break-after:avoid;page-break-after:avoid">Lampiran Foto Bukti</h4>
     <div class="galeri">${berFoto.map(x => `<figure>
       <img src="${esc(fotoSrc(x.i.foto))}" alt="Bukti no. ${x.no}">
       <figcaption><b>No. ${x.no}</b> · ${tglPendek(x.i.tanggal)} · ${x.i.jenis === 'PEMASUKAN' ? 'Masuk' : 'Keluar'} ${rp(jml(x.i))}<br>${esc(x.i.uraian || labelKategori(x.i.transaksi))}${namaPj(x.i) ? '<br>PJ: ' + esc(namaPj(x.i)) : ''}</figcaption>
@@ -1457,13 +1614,19 @@ const renderLaporan = () => {
     </table>
     ${denganFoto && tanpa ? `<p class="cetak-info">Catatan: ${tanpa} transaksi pada laporan ini belum memiliki foto bukti.</p>` : ''}
 
-    <div class="ttd">
-      <div>Mengetahui,<br>Pembina<div class="nama">${esc(pembina)}</div></div>
-      <div><br>Ketua Wirausaha<div class="nama">${esc(ketua)}</div></div>
-      <div>${esc(tglPanjang(new Date()))}<br>Penanggung Jawab<div class="nama">${esc(bendahara)}</div></div>
-    </div>
-    <div class="cetak-info">Dicetak dari aplikasi Keuangan KIR TEI pada ${esc(new Date().toLocaleString('id-ID'))}.</div>
-    ${galeri}`;
+    ${galeri}
+
+    <div class="penutup">
+      <div class="kendala"><b>Catatan kendala :</b> ${kendala ? esc(kendala) : '-'}</div>
+      <div class="ttd">
+        <div>Mengetahui,<br>Pembina<div class="nama">${esc(pembina)}</div></div>
+        <div><br>Ketua Wirausaha<div class="nama">${esc(ketua)}</div></div>
+        <div>${esc(tglPanjang(new Date()))}<br>Penanggung Jawab<div class="nama">${esc(bendahara)}</div></div>
+      </div>
+      <div class="cetak-info">Dicetak dari aplikasi Keuangan Wirausaha KIR TEI ${esc(VERSI_NO)} pada ${esc(new Date().toLocaleString('id-ID'))}.</div>
+    </div>`;
+
+  terapkanTataCetak();
 };
 
 ['lapJenis', 'lapMinggu', 'lapBulan', 'lapFoto'].forEach(id => $(id).addEventListener('change', renderLaporan));
@@ -1481,6 +1644,7 @@ $('btnCetak').addEventListener('click', async () => {
       new Promise(r => setTimeout(r, 8000))
     ]);
   }
+  terapkanTataCetak();
   window.print();
 });
 
