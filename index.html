@@ -272,6 +272,34 @@ input,textarea{font-size:16px}
 }
 @media(prefers-reduced-motion:reduce){.aksi{transition:none}}
 
+
+/* Dropdown custom: mencegah popup native Android yang tidak bisa dikustomisasi. */
+.customSelect{position:relative;width:100%;min-width:0}
+.customSelect select{position:absolute!important;width:1px!important;height:1px!important;min-height:1px!important;
+  opacity:0!important;pointer-events:none!important;left:0;bottom:0;padding:0!important;border:0!important}
+.customSelectTrigger{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:52px;
+  padding:12px 14px;border:1px solid #b9c2cc;border-radius:10px;background:#fff;color:var(--teks);
+  text-align:left;font:inherit;font-size:16px;line-height:1.35}
+.customSelectTrigger:after{content:"";width:9px;height:9px;border-right:2px solid #667085;border-bottom:2px solid #667085;
+  transform:rotate(45deg);margin:-5px 4px 0 0;flex:none}
+.customSelectTrigger:focus-visible{outline:3px solid #8ab8ee;outline-offset:2px}
+#pilihanOverlay{position:fixed;inset:0;z-index:1000;display:none;align-items:flex-end;justify-content:center;
+  padding:14px 14px calc(14px + env(safe-area-inset-bottom));background:rgba(0,0,0,.48)}
+#pilihanOverlay.buka{display:flex}
+.pilihanPanel{width:min(100%,560px);max-height:min(72dvh,620px);overflow:hidden;background:#fff;border-radius:18px;
+  box-shadow:0 12px 40px rgba(0,0,0,.28);display:flex;flex-direction:column}
+.pilihanHead{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--garis);font-weight:700}
+.pilihanTutup{width:38px;height:38px;border:0;border-radius:50%;background:#f0f2f5;font-size:22px;color:#344054}
+.pilihanList{overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.pilihanItem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:62px;padding:14px 18px;
+  border:0;border-bottom:1px solid #edf0f3;background:#fff;color:var(--teks);font:inherit;font-size:16px;text-align:left}
+.pilihanItem:last-child{border-bottom:0}
+.pilihanItem.aktif{color:var(--biru);font-weight:700;background:#f1f7ff}
+.pilihanRadio{width:21px;height:21px;border:2px solid #98a2b3;border-radius:50%;flex:none;display:grid;place-items:center}
+.pilihanItem.aktif .pilihanRadio{border-color:var(--biru)}
+.pilihanItem.aktif .pilihanRadio:after{content:"";width:11px;height:11px;border-radius:50%;background:var(--biru)}
+@media(min-width:700px){#pilihanOverlay{align-items:center}.pilihanPanel{max-height: min(70vh,620px)}}
+
 @page{size:A4;margin:14mm}
 @media print{
   body{background:#fff;padding:0;font-size:12px}
@@ -654,9 +682,9 @@ const WAKTU_HAPUS = 10; // detik menunggu sebelum data benar-benar dihapus
 // Lalu isi VERSI_TGL dan tulis ringkas perubahannya di VERSI_KET.
 const VERSI_UTAMA = 3;
 const VERSI_FITUR = 9;
-const VERSI_PERBAIKAN = 3;
+const VERSI_PERBAIKAN = 4;
 const VERSI_TGL = '26 Nov 2026';
-const VERSI_KET = 'Perbaikan keyboard Android dan tombol aksi';
+const VERSI_KET = 'Dropdown kategori custom Android dan perbaikan keyboard';
 const VERSI_NO = 'v' + VERSI_UTAMA + '.' + VERSI_FITUR + '.' + VERSI_PERBAIKAN; // contoh: v3.9.2
 const VERSI_APP = VERSI_NO + ' · ' + VERSI_TGL;
 
@@ -1678,6 +1706,70 @@ $('btnCetak').addEventListener('click', async () => {
   terapkanTataCetak();
   window.print();
 });
+
+// Dropdown custom Android: nilai tetap disinkronkan ke elemen select asli agar logika aplikasi tidak berubah.
+(() => {
+  const selects = [...document.querySelectorAll('select')];
+  if (!selects.length) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'pilihanOverlay';
+  overlay.innerHTML = '<div class="pilihanPanel" role="dialog" aria-modal="true" aria-labelledby="pilihanJudul"><div class="pilihanHead"><span id="pilihanJudul">Pilih opsi</span><button type="button" class="pilihanTutup" aria-label="Tutup">×</button></div><div class="pilihanList" role="listbox"></div></div>';
+  document.body.appendChild(overlay);
+  const list = overlay.querySelector('.pilihanList');
+  const heading = overlay.querySelector('#pilihanJudul');
+  let activeSelect = null;
+  const labelFor = (sel) => {
+    const label = sel.id ? document.querySelector(`label[for="${sel.id}"]`) : null;
+    return sel.getAttribute('aria-label') || (label && label.textContent.trim()) || 'Pilih opsi';
+  };
+  const sync = (sel) => {
+    const trigger = sel.parentElement.querySelector('.customSelectTrigger');
+    if (!trigger) return;
+    const opt = sel.options[sel.selectedIndex];
+    trigger.querySelector('.customSelectText').textContent = opt ? opt.textContent.trim() : 'Pilih opsi';
+    trigger.setAttribute('aria-label', labelFor(sel) + ': ' + (opt ? opt.textContent.trim() : 'Pilih opsi'));
+  };
+  const close = () => { overlay.classList.remove('buka'); activeSelect = null; };
+  const open = (sel) => {
+    activeSelect = sel;
+    heading.textContent = labelFor(sel);
+    list.replaceChildren();
+    [...sel.options].forEach((opt, index) => {
+      if (opt.disabled && !opt.value) return;
+      const item = document.createElement('button');
+      item.type = 'button'; item.className = 'pilihanItem' + (sel.selectedIndex === index ? ' aktif' : '');
+      item.setAttribute('role','option'); item.setAttribute('aria-selected', sel.selectedIndex === index ? 'true' : 'false');
+      const name = document.createElement('span'); name.textContent = opt.textContent.trim();
+      const radio = document.createElement('span'); radio.className = 'pilihanRadio';
+      item.append(name, radio);
+      item.addEventListener('click', () => {
+        sel.selectedIndex = index;
+        sel.dispatchEvent(new Event('change', {bubbles:true}));
+        sync(sel); close();
+      });
+      list.appendChild(item);
+    });
+    overlay.classList.add('buka');
+    const current = list.querySelector('.aktif');
+    if (current) current.scrollIntoView({block:'nearest'});
+  };
+  selects.forEach(sel => {
+    if (sel.closest('.customSelect')) return;
+    const wrap = document.createElement('div'); wrap.className = 'customSelect';
+    sel.parentNode.insertBefore(wrap, sel); wrap.appendChild(sel);
+    const trigger = document.createElement('button'); trigger.type = 'button'; trigger.className = 'customSelectTrigger';
+    trigger.innerHTML = '<span class="customSelectText"></span>';
+    trigger.setAttribute('aria-haspopup','listbox');
+    trigger.addEventListener('click', () => open(sel));
+    wrap.appendChild(trigger);
+    sel.addEventListener('change', () => sync(sel));
+    sel.addEventListener('invalid', (e) => { e.preventDefault(); open(sel); });
+    sync(sel);
+  });
+  overlay.querySelector('.pilihanTutup').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('buka')) close(); });
+})();
 
 // Android: sinkronkan layout dengan Visual Viewport saat keyboard muncul.
 // Hindari scrollIntoView smooth berulang karena dapat membuat modal meloncat/glitch.
