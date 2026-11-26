@@ -1815,6 +1815,62 @@ $('btnCetak').addEventListener('click', async () => {
   ukurViewport();
 })();
 
+// ===== TOMBOL BACK ANDROID =====
+(() => {
+  // Siapkan riwayat agar tombol Back bisa mendeteksi halaman aktif.
+  history.pushState({ halamanAplikasi: true }, '');
+
+  window.addEventListener('popstate', () => {
+    const terlihat = id => {
+      const el = document.getElementById(id);
+      return el && !el.classList.contains('hidden');
+    };
+
+    // Jika pilihan dropdown sedang terbuka, tutup dahulu.
+    const pilihan = document.getElementById('pilihanOverlay');
+    if (pilihan && pilihan.classList.contains('buka')) {
+      history.pushState({ halamanAplikasi: true }, '');
+      pilihan.querySelector('.pilihanTutup').click();
+      return;
+    }
+
+    // Jika menu samping terbuka.
+    if (document.getElementById('sidebar')?.classList.contains('buka')) {
+      history.pushState({ halamanAplikasi: true }, '');
+      tutupSidebar();
+      return;
+    }
+
+    // Jika kotak konfirmasi terbuka, pilih Batal.
+    if (terlihat('konfirmScreen')) {
+      history.pushState({ halamanAplikasi: true }, '');
+      document.getElementById('konfirmBatal').click();
+      return;
+    }
+
+    // Tutup layar/modal yang sedang terbuka.
+    const daftarModal = [
+      ['fotoScreen', tutupFoto],
+      ['formScreen', tutupForm],
+      ['deleteScreen', tutupModalHapus],
+      ['tutupScreen', tutupModalTutup],
+      ['modalScreen', tutupModalAwal],
+      ['laporanScreen', tutupLaporan]
+    ];
+
+    for (const [id, fungsiTutup] of daftarModal) {
+      if (terlihat(id)) {
+        history.pushState({ halamanAplikasi: true }, '');
+        fungsiTutup();
+        return;
+      }
+    }
+
+    // Jika tidak ada modal, tombol Back kembali ke halaman sebelumnya.
+  });
+})();
+</script>
+
 if (sessionStorage.getItem('isLoggedIn') === 'true') tampilkanAplikasi();
 </script>
 </body>
