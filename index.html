@@ -241,6 +241,37 @@ input,select{min-height:48px}
   .pin input{width:52px}
 }
 
+
+/* ===== Perbaikan viewport Android + kontrol sentuh ===== */
+:root{--tinggi-viewport:100dvh;--atas-viewport:0px}
+html,body{min-height:100%;overscroll-behavior-x:none}
+body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+/* Bar aksi tetap di bawah saat normal, tetapi tidak menutupi form ketika keyboard terbuka. */
+.aksi{position:fixed;bottom:0;transform:translateY(0);transition:transform .16s ease;will-change:transform}
+body.keyboard-open .aksi{transform:translateY(120%);pointer-events:none}
+/* Modal mengikuti tinggi visual viewport, bukan tinggi layar sebelum keyboard muncul. */
+.layar{top:var(--atas-viewport);height:var(--tinggi-viewport);bottom:auto;min-height:0;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;align-items:flex-start}
+.kotak{max-height:calc(var(--tinggi-viewport) - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-y:auto;overscroll-behavior:contain;margin:auto;flex:0 0 auto}
+body.keyboard-open .layar{align-items:flex-start;padding-top:8px;padding-bottom:8px}
+body.keyboard-open .kotak{max-height:calc(var(--tinggi-viewport) - 16px);margin:0 auto}
+/* Area sentuh pilihan Android lebih lega dan konsisten. */
+select{min-height:52px;padding:12px 42px 12px 14px;font-size:16px;line-height:1.35;border-radius:10px;
+  color:var(--teks);-webkit-appearance:auto;appearance:auto}
+option{font-size:16px;padding:10px}
+input,textarea{font-size:16px}
+.menuItem,.sbHead button,.btnMenu{min-height:48px}
+.stickyBtn{position:sticky;bottom:-8px;padding:10px 0 calc(8px + env(safe-area-inset-bottom));
+  background:linear-gradient(to bottom,rgba(255,255,255,.92),#fff 24%);z-index:3}
+@media(max-width:600px){
+  .layar{padding-left:10px;padding-right:10px}
+  .kotak{border-radius:12px;padding:18px;width:100%}
+  .fg{scroll-margin-block:16px}
+  .aksi{padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+}
+@media(prefers-reduced-motion:reduce){.aksi{transition:none}}
+
 @page{size:A4;margin:14mm}
 @media print{
   body{background:#fff;padding:0;font-size:12px}
@@ -266,38 +297,6 @@ input,select{min-height:48px}
   #laporanDoc.ttdIkut{min-height:0}
   #laporanDoc.ttdIkut .penutup .ttd{margin-top:0}
 }
-
-/* ===== v3.9.3: keyboard-safe modal + sticky quick options ===== */
-:root{--app-vh:100dvh;--vv-top:0px;--keyboard-space:0px}
-html,body{min-height:100%;overscroll-behavior-y:contain}
-body{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
-.aksi{grid-template-columns:1fr 1fr auto;align-items:center}
-.aksi .btn{min-width:0}
-.aksi .btn.opsi{width:auto;min-width:76px;padding:12px 10px;background:#fff;color:var(--biru);
-  border:1px solid #b9cce2;font-size:14px;white-space:nowrap}
-.layar{top:var(--vv-top);height:var(--app-vh);bottom:auto;min-height:0;
-  overflow-y:auto;align-items:flex-start}
-.kotak{max-height:calc(var(--app-vh) - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-.stickyBtn{position:sticky;bottom:0;margin:8px -2px -2px;padding:10px 2px 2px;
-  background:linear-gradient(to bottom,rgba(255,255,255,.92),#fff 24%);z-index:5}
-#sidebar{height:var(--app-vh);top:var(--vv-top);bottom:auto;overscroll-behavior:contain}
-#sidebarOverlay{top:var(--vv-top);height:var(--app-vh);bottom:auto}
-body.keyboard-open #barAksi{opacity:0;visibility:hidden;pointer-events:none;transform:translateY(110%)}
-body.keyboard-open .layar{align-items:flex-start}
-body.keyboard-open .kotak{margin:4px auto;max-height:calc(var(--app-vh) - 8px)}
-body.keyboard-open .stickyBtn{position:static;background:#fff}
-@media(max-width:420px){
-  .aksi{gap:6px;padding-left:8px;padding-right:8px}
-  .aksi .btn{font-size:14px;padding:12px 5px}
-  .aksi .btn.opsi{min-width:64px;font-size:13px;padding:10px 7px}
-  .kotak{padding:18px}
-}
-@media(min-width:700px){
-  .layar{align-items:center}
-  body.keyboard-open .layar{align-items:flex-start}
-}
-
 </style>
 </head>
 <body>
@@ -599,9 +598,8 @@ body.keyboard-open .stickyBtn{position:static;background:#fff}
   </div>
 
   <div class="aksi" id="barAksi">
-    <button class="btn masuk" onclick="bukaForm('PEMASUKAN')">+ Masuk</button>
-    <button class="btn keluar" onclick="bukaForm('PENGELUARAN')">− Keluar</button>
-    <button class="btn opsi" type="button" onclick="bukaSidebar()" aria-label="Buka opsi">☰ Opsi</button>
+    <button class="btn masuk" onclick="bukaForm('PEMASUKAN')">+ Uang masuk</button>
+    <button class="btn keluar" onclick="bukaForm('PENGELUARAN')">− Uang keluar</button>
   </div>
 
   <div class="card">
@@ -658,7 +656,7 @@ const VERSI_UTAMA = 3;
 const VERSI_FITUR = 9;
 const VERSI_PERBAIKAN = 3;
 const VERSI_TGL = '26 Nov 2026';
-const VERSI_KET = 'Perbaikan keyboard & tombol opsi sticky';
+const VERSI_KET = 'Perbaikan keyboard Android dan tombol aksi';
 const VERSI_NO = 'v' + VERSI_UTAMA + '.' + VERSI_FITUR + '.' + VERSI_PERBAIKAN; // contoh: v3.9.2
 const VERSI_APP = VERSI_NO + ' · ' + VERSI_TGL;
 
@@ -1113,11 +1111,7 @@ const bukaForm = (jenis) => {
   isiDaftarPj();
   $('pj').value = ''; // penanggung jawab selalu kosong: harus diisi ulang
   $('formScreen').classList.remove('hidden');
-  // Jangan munculkan keyboard otomatis di ponsel; pengguna bisa memilih kolom
-  // tanpa modal meloncat saat viewport mengecil.
-  if (!window.matchMedia('(pointer: coarse)').matches) {
-    setTimeout(() => $('jumlah').focus({ preventScroll: true }), 120);
-  }
+  setTimeout(() => $('jumlah').focus(), 100);
 };
 const tutupForm = () => $('formScreen').classList.add('hidden');
 
@@ -1685,51 +1679,47 @@ $('btnCetak').addEventListener('click', async () => {
   window.print();
 });
 
-// Keyboard mobile: gunakan VisualViewport agar modal mengikuti area yang benar-benar terlihat.
+// Android: sinkronkan layout dengan Visual Viewport saat keyboard muncul.
+// Hindari scrollIntoView smooth berulang karena dapat membuat modal meloncat/glitch.
 (() => {
   const root = document.documentElement;
   const vv = window.visualViewport;
-  let focusTimer = 0;
-  let tinggiNormal = window.innerHeight;
+  let resizeRaf = 0;
   const ukurViewport = () => {
-    const tinggi = vv ? vv.height : window.innerHeight;
-    const atas = vv ? vv.offsetTop : 0;
-    if (!document.activeElement || !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) {
-      tinggiNormal = Math.max(tinggiNormal, window.innerHeight, tinggi);
-    }
-    root.style.setProperty('--app-vh', Math.max(240, tinggi) + 'px');
-    root.style.setProperty('--vv-top', Math.max(0, atas) + 'px');
-    const keyboardTerbuka = !!(document.activeElement &&
-      /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) &&
-      tinggiNormal - tinggi > 120);
-    document.body.classList.toggle('keyboard-open', keyboardTerbuka);
+    cancelAnimationFrame(resizeRaf);
+    resizeRaf = requestAnimationFrame(() => {
+      const tinggi = vv ? vv.height : window.innerHeight;
+      const atas = vv ? vv.offsetTop : 0;
+      root.style.setProperty('--tinggi-viewport', Math.max(240, tinggi) + 'px');
+      root.style.setProperty('--atas-viewport', Math.max(0, atas) + 'px');
+      const aktif = document.activeElement;
+      const sedangInput = aktif && /INPUT|SELECT|TEXTAREA/.test(aktif.tagName) &&
+        !['file','checkbox','radio','button','submit'].includes((aktif.type || '').toLowerCase());
+      const keyboardTerbuka = !!(sedangInput && window.innerHeight - tinggi > 120);
+      document.body.classList.toggle('keyboard-open', keyboardTerbuka);
+    });
   };
   if (vv) {
-    vv.addEventListener('resize', ukurViewport, { passive: true });
-    vv.addEventListener('scroll', ukurViewport, { passive: true });
+    vv.addEventListener('resize', ukurViewport, {passive:true});
+    vv.addEventListener('scroll', ukurViewport, {passive:true});
   }
-  window.addEventListener('resize', ukurViewport, { passive: true });
+  window.addEventListener('resize', ukurViewport, {passive:true});
   document.addEventListener('focusin', (e) => {
-    const el = e.target;
-    if (!(el.closest && el.closest('.kotak')) || !/INPUT|TEXTAREA|SELECT/.test(el.tagName)) return;
-    window.clearTimeout(focusTimer);
-    focusTimer = window.setTimeout(() => {
-      ukurViewport();
-      // Scroll hanya di dalam kotak modal, bukan seluruh halaman di belakang modal.
-      const kotak = el.closest('.kotak');
-      if (!kotak) return;
-      const er = el.getBoundingClientRect();
-      const kr = kotak.getBoundingClientRect();
-      if (er.bottom > kr.bottom - 16 || er.top < kr.top + 12) {
-        const delta = er.bottom > kr.bottom - 16
-          ? er.bottom - kr.bottom + 28 : er.top - kr.top - 20;
-        kotak.scrollBy({ top: delta, behavior: 'smooth' });
+    if (!e.target.matches || !e.target.matches('input,select,textarea')) return;
+    ukurViewport();
+    // Tunggu keyboard selesai mengubah viewport, lalu geser hanya bila field terpotong.
+    setTimeout(() => {
+      const el = e.target;
+      if (!el.isConnected) return;
+      const r = el.getBoundingClientRect();
+      const h = vv ? vv.height : window.innerHeight;
+      if (r.bottom > h - 18 || r.top < 8) {
+        el.scrollIntoView({block:'nearest', inline:'nearest', behavior:'auto'});
       }
-    }, 180);
+      ukurViewport();
+    }, 260);
   });
-  document.addEventListener('focusout', () => {
-    window.setTimeout(ukurViewport, 120);
-  });
+  document.addEventListener('focusout', () => setTimeout(ukurViewport, 180));
   ukurViewport();
 })();
 
