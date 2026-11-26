@@ -1815,6 +1815,16 @@ $('btnCetak').addEventListener('click', async () => {
   ukurViewport();
 })();
 
+// Cegah browser mengubah posisi scroll otomatis
+history.scrollRestoration = 'manual';
+
+// Simpan posisi scroll terakhir
+let posisiScrollTerakhir = window.scrollY;
+
+window.addEventListener('scroll', () => {
+  posisiScrollTerakhir = window.scrollY;
+}, { passive: true });
+
 // ===== TOMBOL BACK ANDROID =====
 (() => {
   // Siapkan riwayat agar tombol Back bisa mendeteksi halaman aktif.
