@@ -1,20 +1,14 @@
 <!DOCTYPE html>
 <!--
   Keuangan Wirausaha KIR TEI
-  VERSI TERBARU : v3.9.2 (22 November 2026)
-  PERUBAHAN v3.9.2: Cetak laporan: "Mengetahui / tanda tangan" selalu di dasar HALAMAN TERAKHIR
-                   (juga bila laporan lebih dari 1 halaman). Jarak dari catatan kendala bisa diatur
-                   (5 - 120 mm) lewat menu Cetak laporan, ada pilihan "Tanda tangan di dasar kertas".
-  RIWAYAT       : v3.9.1 Tanda tangan didorong ke dasar kertas, versi ikut tercetak
+  VERSI TERBARU : v3.9.3 (26 November 2026)
+  PERUBAHAN v3.9.3: Perbaikan glitch UI saat keyboard muncul (visualViewport & scroll modal),
+                   serta UI pemilih opsi (choice sheet) untuk tombol yang memiliki pilihan.
+  RIWAYAT       : v3.9.2 Tanda tangan di dasar halaman terakhir, jarak bisa diatur
+                  v3.9.1 Tanda tangan didorong ke dasar kertas, versi ikut tercetak
                   v3.9   Sidebar berisi periode + Keluar, catatan kendala di laporan
                   v3.8   Kotak konfirmasi dalam aplikasi, catatan modal awal wajib
                   v3.7   Modal awal, penggabungan nama penanggung jawab, keterangan nama asli
-
-  ATURAN NOMOR VERSI (format  utama.fitur.perbaikan):
-    angka ke-3  3.9.1 -> 3.9.2   perbaikan / penyesuaian kecil (tampilan, jarak, teks)
-    angka ke-2  3.9.2 -> 3.10.0  fitur baru (angka ke-3 kembali ke 0)
-    angka ke-1  3.10.0 -> 4.0.0  perubahan besar
-  Cara mengganti: ubah VERSI_UTAMA, VERSI_FITUR, VERSI_PERBAIKAN, VERSI_TGL, VERSI_KET (cari: VERSI_UTAMA di bagian script).
 -->
 <html lang="id">
 <head>
@@ -23,20 +17,32 @@
 <meta name="theme-color" content="#0056b3">
 <title>Keuangan Wirausaha KIR TEI</title>
 <style>
-:root{--biru:#0056b3;--hijau:#157347;--merah:#c62828;--bg:#f4f6f9;--garis:#dde2e8;--teks:#1f2933;--abu:#667085}
+:root{
+  --biru:#0056b3;--hijau:#157347;--merah:#c62828;--bg:#f4f6f9;--garis:#dde2e8;--teks:#1f2933;--abu:#667085;
+  --vvh:100dvh;--kb:0px;
+}
 *{box-sizing:border-box}
-body{margin:0;padding:16px;background:var(--bg);color:var(--teks);font-family:'Segoe UI',Tahoma,Verdana,sans-serif;font-size:16px;line-height:1.4}
+html{-webkit-text-size-adjust:100%;height:100%}
+body{
+  margin:0;min-height:var(--vvh);
+  padding:12px 12px calc(96px + env(safe-area-inset-bottom));
+  background:var(--bg);color:var(--teks);
+  font-family:'Segoe UI',Tahoma,Verdana,sans-serif;font-size:16px;line-height:1.4;
+  -webkit-tap-highlight-color:transparent;
+}
 .wrap{max-width:640px;margin:auto}
 .hidden{display:none!important}
-button{font:inherit;cursor:pointer}
+button{font:inherit;cursor:pointer;touch-action:manipulation}
+input,select,textarea,label{touch-action:manipulation}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #8ab8ee;outline-offset:2px}
 
 /* Kartu & umum */
 .card{background:#fff;border:1px solid var(--garis);border-radius:12px;padding:16px;margin-bottom:14px}
 label{display:block;font-weight:600;margin:0 0 6px}
 input,select,textarea{width:100%;padding:12px;font:inherit;border:1px solid #b9c2cc;border-radius:8px;background:#fff}
+input,select{min-height:48px}
 textarea{min-height:84px;resize:vertical}
-.btn{display:block;width:100%;padding:14px;border:0;border-radius:10px;font-weight:700;color:#fff;background:var(--biru)}
+.btn{display:block;width:100%;min-height:52px;padding:14px;border:0;border-radius:10px;font-weight:700;color:#fff;background:var(--biru)}
 .btn.abu{background:#e9edf2;color:var(--teks)}
 .btn.lap{background:#fff;color:var(--biru);border:2px solid var(--biru);margin-bottom:14px}
 .btn:disabled{opacity:.6}
@@ -44,26 +50,63 @@ textarea{min-height:84px;resize:vertical}
 /* Header */
 .top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .top h1{flex:1;margin:0;font-size:20px;line-height:1.2;color:var(--biru)}
-.top .btnMenu{width:46px;height:46px;padding:0;font-size:24px;line-height:1;color:var(--biru);flex-shrink:0;border:1px solid var(--garis);background:#fff;border-radius:8px}
-.periodeTag{display:block;width:100%;text-align:left;border:1px solid var(--garis);background:#fff;border-radius:10px;
-  padding:10px 12px;margin:0 0 14px;font-weight:600;color:var(--biru);overflow-wrap:anywhere}
+.top .btnMenu{width:46px;height:46px;min-height:46px;padding:0;font-size:24px;line-height:1;color:var(--biru);flex-shrink:0;border:1px solid var(--garis);background:#fff;border-radius:8px}
+.periodeTag{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  width:100%;text-align:left;border:1px solid var(--garis);background:#fff;border-radius:10px;
+  padding:11px 14px;margin:0 0 14px;font-weight:600;color:var(--biru);overflow-wrap:anywhere
+}
+.periodeTag .panah{font-size:12px;opacity:.75;flex-shrink:0}
+
+/* UI Tombol Pilihan (Choice Picker Sheet) */
+#opsiScreen{align-items:flex-end;padding:0;z-index:85}
+.opsiKotak{
+  width:100%;max-width:640px;margin:0 auto;
+  background:#fff;border-radius:18px 18px 0 0;
+  padding:18px 16px calc(18px + env(safe-area-inset-bottom));
+  max-height:calc(var(--vvh) - 24px);overflow:auto;
+  box-shadow:0 -8px 28px rgba(15,23,42,.22);
+}
+.opsiHandle{width:40px;height:4px;border-radius:99px;background:#cbd5e1;margin:0 auto 12px}
+.opsiHead h3{margin:0;font-size:18px;color:var(--teks)}
+.opsiHead p{margin:4px 0 14px;font-size:13px;color:var(--abu)}
+.opsiList{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.opsiBtn{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  width:100%;text-align:left;padding:14px;min-height:54px;
+  border:1.5px solid var(--garis);border-radius:12px;background:#fff;color:var(--teks);
+  transition:border-color .15s ease,background-color .15s ease;
+}
+.opsiBtn:hover{border-color:#93c5fd;background:#f8fafc}
+.opsiBtn.aktif{border-color:var(--biru);background:#eff6ff}
+.opsiBtn .opsiJudul{font-weight:700;font-size:15px;display:block}
+.opsiBtn .opsiSub{font-size:12px;color:var(--abu);display:block;margin-top:2px}
+.opsiBtn .opsiBadge{
+  font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;flex-shrink:0;
+  background:#e2e8f0;color:#334155;
+}
+.opsiBtn.aktif .opsiBadge{background:var(--biru);color:#fff}
 
 /* Sidebar */
 #sidebarOverlay{position:fixed;inset:0;background:rgba(20,30,45,.5);z-index:40}
-#sidebar{position:fixed;top:0;left:0;bottom:0;width:290px;max-width:84vw;background:#fff;z-index:45;
+#sidebar{
+  position:fixed;top:0;left:0;height:var(--vvh);width:290px;max-width:84vw;background:#fff;z-index:45;
   transform:translateX(-100%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s;
   display:flex;flex-direction:column;overflow:auto;
   padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
-  box-shadow:4px 0 18px rgba(0,0,0,.18)}
+  box-shadow:4px 0 18px rgba(0,0,0,.18);
+}
 #sidebar.buka{transform:none;visibility:visible;transition:transform .22s ease,visibility 0s}
 .sbHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .sbHead b{font-size:19px;color:var(--biru)}
-.sbHead button{border:0;background:var(--bg);border-radius:8px;width:42px;height:42px;font-size:20px}
+.sbHead button{border:0;background:var(--bg);border-radius:8px;width:42px;height:42px;min-height:42px;font-size:20px}
 .sbPeriode{background:var(--bg);border-radius:10px;padding:12px;margin-bottom:14px}
 .sbPeriode label{font-size:13px;color:var(--abu);margin-bottom:6px}
 .sbPeriode select{font-weight:600}
-.menuItem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:14px;margin-bottom:10px;
-  border:1px solid var(--garis);background:#fff;border-radius:10px;font-weight:700;color:var(--biru);min-height:54px}
+.menuItem{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:14px;margin-bottom:10px;
+  border:1px solid var(--garis);background:#fff;border-radius:10px;font-weight:700;color:var(--biru);min-height:54px;
+}
 .menuItem.bahaya{color:var(--merah);border-color:#f0b4b4}
 .menuItem.keluar{color:var(--teks);background:var(--bg)}
 .menuItem small{display:block;font-weight:400;color:var(--abu);font-size:12px}
@@ -84,9 +127,17 @@ textarea{min-height:84px;resize:vertical}
 .saldo .baris div{flex:1;background:rgba(255,255,255,.15);border-radius:8px;padding:8px 10px;font-size:14px}
 .saldo .baris b{display:block;font-size:16px}
 
-/* Tombol catat */
-.aksi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.aksi .btn{padding:18px 10px;font-size:17px}
+/* Tombol catat menempel di bawah layar (otomatis naik/sembunyi saat keyboard buka) */
+.aksi{
+  position:fixed;left:0;right:0;bottom:var(--kb,0px);z-index:20;
+  display:grid;grid-template-columns:1fr 1fr;max-width:640px;margin:0 auto;gap:10px;
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  background:rgba(244,246,249,.97);border-top:1px solid var(--garis);
+  box-shadow:0 -4px 14px rgba(0,0,0,.08);
+  transition:bottom .16s ease;
+}
+body.kb-open .aksi{display:none}
+.aksi .btn{padding:14px 8px;font-size:17px}
 .btn.masuk{background:var(--hijau)}
 .btn.keluar{background:var(--merah)}
 
@@ -97,7 +148,7 @@ textarea{min-height:84px;resize:vertical}
 .ringkas{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
 .ringkas div{background:var(--bg);border-radius:8px;padding:10px 4px}
 .ringkas small{display:block;color:var(--abu);font-size:13px}
-.ringkas b{font-size:15px}
+.ringkas b{font-size:15px;overflow-wrap:anywhere}
 .info-foto{margin:10px 0 0;font-size:13px;color:var(--abu)}
 .hijau{color:var(--hijau)}.merah{color:var(--merah)}.biru{color:var(--biru)}
 
@@ -106,29 +157,41 @@ textarea{min-height:84px;resize:vertical}
 .cari #searchInput{grid-column:1/-1}
 .hasilInfo{font-size:13px;color:var(--abu);margin:0 0 6px}
 .grupBulan{font-weight:700;font-size:13px;color:var(--biru);background:var(--bg);border-radius:6px;padding:6px 10px;margin:10px 0 0}
-.item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--garis)}
+.item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:12px 0;border-top:1px solid var(--garis)}
 .item:first-child,.grupBulan+.item{border-top:0}
-.item .kiri{display:flex;align-items:center;gap:10px;min-width:0}
+.item .kiri{display:flex;align-items:flex-start;gap:10px;min-width:0}
 .item .info{min-width:0}
 .item .ur{font-weight:600;overflow-wrap:anywhere}
-.item .sub{color:var(--abu);font-size:13px}
+.item .sub{color:var(--abu);font-size:13px;overflow-wrap:anywhere}
 .item .kanan{text-align:right;flex-shrink:0}
-.item .jml{font-weight:700;white-space:nowrap}
+.item .jml{font-weight:700;font-size:15px;white-space:nowrap}
 .item.tunda .info{text-decoration:line-through;opacity:.6}
-.thumb{width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--garis);cursor:pointer;flex-shrink:0;background:#e9edf2}
-.hapus{margin-top:4px;border:0;background:none;color:var(--merah);font-size:13px;padding:2px 0;text-decoration:underline}
-.batal{margin-top:4px;border:0;background:#ffc107;color:#222;font-size:13px;font-weight:700;padding:4px 10px;border-radius:6px}
+.thumb{width:52px;height:52px;object-fit:cover;border-radius:8px;border:1px solid var(--garis);cursor:pointer;flex-shrink:0;background:#e9edf2}
+.hapus{margin-top:4px;border:0;background:none;color:var(--merah);font-size:13px;padding:8px 0;min-height:36px;text-decoration:underline}
+.batal{margin-top:4px;border:0;background:#ffc107;color:#222;font-size:13px;font-weight:700;padding:8px 12px;border-radius:6px}
 .kosong{text-align:center;color:var(--abu);padding:18px 0}
 
-/* Jendela (login, form, PIN hapus) */
-.layar{position:fixed;inset:0;background:rgba(20,30,45,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+/* Jendela modal: align-items:flex-start + margin:auto mencegah bagian atas terpotong saat keyboard muncul */
+.layar{
+  position:fixed;top:0;left:0;width:100%;height:var(--vvh);
+  background:rgba(20,30,45,.55);
+  display:flex;align-items:flex-start;justify-content:center;
+  overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  padding:12px 12px calc(16px + env(safe-area-inset-bottom));
+  z-index:50;
+}
 .layar.penuh{background:var(--bg)}
-.kotak{background:#fff;border-radius:14px;padding:22px;width:100%;max-width:380px;max-height:100%;overflow:auto}
+.kotak{
+  background:#fff;border-radius:14px;padding:20px;
+  width:100%;max-width:380px;margin:auto;flex-shrink:0;
+  box-shadow:0 12px 32px rgba(15,23,42,.2);
+}
+body.kb-open .layar{align-items:flex-start;padding-top:8px}
+body.kb-open .kotak{margin-top:0;margin-bottom:auto}
 .kotak h2{margin:0 0 4px;font-size:21px}
 .kotak p.ket{margin:0 0 16px;color:var(--abu)}
 .pin{display:flex;justify-content:center;gap:10px;margin-bottom:16px}
 .pin input{width:56px;height:60px;text-align:center;font-size:26px;font-weight:700;padding:0}
-/* PIN reset 6 angka: kotak lebih kecil agar muat di layar sempit */
 .pin.enam{gap:6px}
 .pin.enam input{flex:1;min-width:0;max-width:48px;width:auto;height:54px;font-size:22px}
 .galat{color:var(--merah);font-weight:600;margin:12px 0 0;display:none;text-align:center}
@@ -150,17 +213,23 @@ textarea{min-height:84px;resize:vertical}
 .contohNama{background:#eef4fb;border:1px solid #c9dcf3;border-radius:8px;padding:8px 10px;font-size:13px;margin:8px 0 0;line-height:1.6}
 
 /* Lihat foto */
-#fotoScreen{background:rgba(0,0,0,.88);flex-direction:column;gap:12px;z-index:70}
-#fotoBesar{max-width:100%;max-height:78vh;border-radius:8px;background:#fff}
+#fotoScreen{background:rgba(0,0,0,.88);align-items:center;flex-direction:column;justify-content:center;gap:12px;z-index:70}
+#fotoBesar{max-width:100%;max-height:70vh;border-radius:8px;background:#fff}
 #fotoCap{color:#fff;text-align:center;font-size:14px}
 #fotoScreen button{width:auto;padding:10px 28px}
 
 /* Pemberitahuan singkat */
-#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1f2933;color:#fff;padding:12px 20px;border-radius:10px;z-index:99;max-width:90%}
+#toast{
+  position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));
+  transform:translateX(-50%);background:#1f2933;color:#fff;
+  padding:12px 20px;border-radius:10px;z-index:99;max-width:90%;
+  transition:bottom .16s ease;
+}
+body.kb-open #toast{bottom:calc(16px + env(safe-area-inset-bottom))}
 .foot{text-align:center;color:#98a2b3;font-size:12px;margin:18px 0 6px;line-height:1.5}
 
 /* ============ LAPORAN ============ */
-#laporanScreen{display:block;overflow:auto;z-index:60;align-items:flex-start}
+#laporanScreen{display:block;overflow:auto;z-index:60}
 #laporanScreen .wrap{max-width:820px}
 .cek{display:flex;align-items:center;gap:10px;font-weight:600;margin:0 0 14px}
 .cek input{width:22px;height:22px;flex-shrink:0}
@@ -168,7 +237,7 @@ textarea{min-height:84px;resize:vertical}
 .rentangCetak input[type=range]{flex:1;min-height:36px;padding:0;border:0;background:none}
 .logoWrap{display:flex;align-items:center;gap:12px;margin-top:8px}
 .logoWrap img{width:56px;height:56px;object-fit:contain;border:1px solid var(--garis);border-radius:8px;background:#fff}
-#laporanDoc{background:#fff;border:1px solid var(--garis);border-radius:8px;padding:22px;font-size:13px;color:#000;overflow-x:auto}
+#laporanDoc{background:#fff;border:1px solid var(--garis);border-radius:8px;padding:22px;font-size:13px;color:#000;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .kop{display:flex;align-items:center;gap:12px;text-align:center;border-bottom:3px double #000;padding-bottom:10px;margin-bottom:14px}
 .kop .teks{flex:1;min-width:0}
 .kop .logoKop{width:74px;height:74px;object-fit:contain;flex-shrink:0}
@@ -195,40 +264,14 @@ textarea{min-height:84px;resize:vertical}
 .galeri img{width:100%;height:230px;object-fit:contain;background:#f4f6f9;display:block}
 .galeri figcaption{font-size:11px;margin-top:4px}
 .penutup{break-inside:avoid;page-break-inside:avoid}
-/* Jarak catatan kendala ke tanda tangan = variabel --jarak (diatur lewat menu Cetak laporan) */
 .kendala{margin-top:14px;margin-bottom:var(--jarak,22mm);font-size:12px;white-space:pre-line;overflow-wrap:anywhere}
 .ttd{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;text-align:center;margin-top:0;break-inside:avoid;page-break-inside:avoid}
 .ttd .nama{margin-top:64px;font-weight:700;text-decoration:underline;min-height:1.2em;overflow-wrap:anywhere}
 .cetak-info{font-size:11px;color:#555;margin-top:14px}
 
-/* Salinan tak terlihat untuk menghitung jumlah halaman cetak (lebar isi A4 = 210 - 28 = 182 mm) */
 #laporanProbe{position:absolute;left:-10000px;top:0;width:182mm;font-size:13px;color:#000;visibility:hidden;pointer-events:none}
 #laporanProbe .galeri{grid-template-columns:repeat(2,1fr)}
 
-/* ===== Android / layar sempit ===== */
-html{-webkit-text-size-adjust:100%}
-body{padding:12px 12px calc(96px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent}
-button,input,select,textarea,label{touch-action:manipulation}
-input,select{min-height:48px}
-.btn{min-height:52px}
-/* Tombol catat menempel di bawah layar agar mudah dijangkau ibu jari */
-.aksi{position:fixed;left:0;right:0;bottom:0;z-index:20;max-width:640px;margin:0 auto;gap:10px;
-  padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(244,246,249,.97);
-  border-top:1px solid var(--garis);box-shadow:0 -4px 14px rgba(0,0,0,.08)}
-.aksi .btn{padding:14px 8px;font-size:17px}
-#toast{bottom:calc(100px + env(safe-area-inset-bottom))}
-.layar{overscroll-behavior:contain;padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
-.kotak{margin:auto}
-.stickyBtn{position:sticky;bottom:-22px;background:#fff;padding:10px 0 0;margin-top:4px;z-index:2}
-.item{align-items:flex-start}
-.item .kiri{align-items:flex-start}
-.thumb{width:52px;height:52px}
-.item .jml{font-size:15px}
-.item .sub{overflow-wrap:anywhere}
-.hapus{padding:8px 0;min-height:36px}
-.batal{padding:8px 12px}
-.ringkas b{overflow-wrap:anywhere}
-#laporanDoc{-webkit-overflow-scrolling:touch}
 @media(max-width:420px){
   .cari{grid-template-columns:1fr}
   .ringkas{gap:6px}
@@ -243,9 +286,9 @@ input,select{min-height:48px}
 
 @page{size:A4;margin:14mm}
 @media print{
-  body{background:#fff;padding:0;font-size:12px}
+  body{background:#fff;padding:0;font-size:12px;min-height:auto}
   body>*{display:none!important}
-  #laporanScreen{display:block!important;position:static;background:#fff;padding:0;overflow:visible}
+  #laporanScreen{display:block!important;position:static;height:auto;background:#fff;padding:0;overflow:visible}
   #laporanScreen.hidden{display:none!important}
   #laporanScreen .noprint{display:none!important}
   #laporanScreen .wrap{max-width:none}
@@ -254,15 +297,10 @@ input,select{min-height:48px}
   .tb th,.tb tr.tot td,.tb tr.bln td,.tb tr.sub td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .kop .logoKop{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
-  /* v3.9.2: tanda tangan di dasar HALAMAN TERAKHIR.
-     --tinggiCetak = jumlah halaman x 268 mm, dihitung otomatis oleh script (hitungTinggiCetak).
-     268 mm = tinggi isi satu halaman A4 (297 mm dikurangi margin 28 mm) dikurangi cadangan 1 mm.
-     Jarak minimal catatan kendala ke tanda tangan = --jarak (diatur lewat menu Cetak laporan). */
   #laporanDoc{display:flex;flex-direction:column;min-height:var(--tinggiCetak,268mm)}
   #laporanDoc>*{flex-shrink:0}
   .penutup{flex:1 1 auto;display:flex;flex-direction:column}
   .penutup .ttd{margin-top:auto}
-  /* Pilihan "Tanda tangan di dasar kertas" dimatikan: tanda tangan tepat setelah catatan kendala */
   #laporanDoc.ttdIkut{min-height:0}
   #laporanDoc.ttdIkut .penutup .ttd{margin-top:0}
 }
@@ -381,13 +419,26 @@ input,select{min-height:48px}
   </div>
 </div>
 
-<!-- KONFIRMASI (pengganti kotak bawaan browser) -->
+<!-- KONFIRMASI -->
 <div id="konfirmScreen" class="layar hidden" style="z-index:80">
   <div class="kotak">
     <h2 id="konfirmJudul"></h2>
     <p class="ket" id="konfirmIsi" style="white-space:pre-line;margin-bottom:18px"></p>
     <button type="button" class="btn" id="konfirmOk">Ya, lanjutkan</button>
     <button type="button" class="btn abu" id="konfirmBatal">Batal</button>
+  </div>
+</div>
+
+<!-- UI TOMBOL PILIHAN (CHOICE PICKER) -->
+<div id="opsiScreen" class="layar hidden" role="dialog" aria-modal="true" aria-labelledby="opsiJudul">
+  <div class="opsiKotak" id="opsiKotak">
+    <div class="opsiHandle"></div>
+    <div class="opsiHead">
+      <h3 id="opsiJudul">Pilih opsi</h3>
+      <p id="opsiKet"></p>
+    </div>
+    <div class="opsiList" id="opsiList"></div>
+    <button type="button" class="btn abu" id="opsiBatal">Tutup</button>
   </div>
 </div>
 
@@ -444,8 +495,10 @@ input,select{min-height:48px}
         </div>
         <p class="kecil">Foto dikecilkan otomatis agar hemat kuota.</p>
       </div>
-      <div class="stickyBtn"><button type="submit" class="btn" id="btnSubmit">Simpan</button>
-      <button type="button" class="btn abu" onclick="tutupForm()">Batal</button></div>
+      <div class="fg" style="margin-bottom:0">
+        <button type="submit" class="btn" id="btnSubmit">Simpan</button>
+        <button type="button" class="btn abu" style="margin-top:10px" onclick="tutupForm()">Batal</button>
+      </div>
     </form>
   </div>
 </div>
@@ -553,7 +606,10 @@ input,select{min-height:48px}
     <h1>Keuangan Wirausaha KIR TEI</h1>
   </div>
 
-  <button type="button" class="periodeTag" id="periodeTag" onclick="bukaSidebar()" aria-label="Ganti periode kepengurusan">Memuat periode…</button>
+  <button type="button" class="periodeTag" id="periodeTag" onclick="bukaPilihanPeriode()" aria-label="Pilih periode kepengurusan">
+    <span id="periodeTagTeks">Memuat periode…</span>
+    <span class="panah">Pilih ▾</span>
+  </button>
   <div id="bannerArsip" class="banner hidden"></div>
 
   <div class="card saldo">
@@ -613,26 +669,16 @@ input,select{min-height:48px}
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzZV7cezuIMDd4My-6w5gRVS8GsWeMUXlL2oc_iofVlJTnbWW38pFgFwCx9dbbzV37g7w/exec";
-const WAKTU_HAPUS = 10; // detik menunggu sebelum data benar-benar dihapus
+const WAKTU_HAPUS = 10;
 
-// ===== VERSI APLIKASI (tampil di menu samping, bagian bawah halaman, dan laporan cetak) =====
-// Format utama.fitur.perbaikan:
-//   perbaikan / penyesuaian kecil -> naikkan VERSI_PERBAIKAN   (3.9.2 -> 3.9.3)
-//   fitur baru                    -> naikkan VERSI_FITUR, VERSI_PERBAIKAN kembali ke 0   (3.9.3 -> 3.10.0)
-//   perubahan besar               -> naikkan VERSI_UTAMA, dua angka lain kembali ke 0    (3.10.0 -> 4.0.0)
-// Lalu isi VERSI_TGL dan tulis ringkas perubahannya di VERSI_KET.
 const VERSI_UTAMA = 3;
 const VERSI_FITUR = 9;
-const VERSI_PERBAIKAN = 2;
-const VERSI_TGL = '22 Nov 2026';
-const VERSI_KET = 'Cetak: jarak tanda tangan bisa diatur';
-const VERSI_NO = 'v' + VERSI_UTAMA + '.' + VERSI_FITUR + '.' + VERSI_PERBAIKAN; // contoh: v3.9.2
+const VERSI_PERBAIKAN = 3;
+const VERSI_TGL = '26 Nov 2026';
+const VERSI_KET = 'Anti-glitch keyboard & UI tombol pilihan';
+const VERSI_NO = 'v' + VERSI_UTAMA + '.' + VERSI_FITUR + '.' + VERSI_PERBAIKAN;
 const VERSI_APP = VERSI_NO + ' · ' + VERSI_TGL;
 
-// LOGO EKSTRAKURIKULER (tampil di kop laporan cetak).
-// Cara tetap untuk semua perangkat: isi dengan alamat file logo di folder yang sama dengan index.html
-// (contoh: 'logo.png') atau data URL gambar (data:image/png;base64,...).
-// Cara cepat: unggah logo lewat menu Cetak laporan (tersimpan di perangkat itu saja).
 const LOGO_BAWAAN = '';
 
 const $ = (id) => document.getElementById(id);
@@ -641,7 +687,97 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&
 document.querySelectorAll('.verApp').forEach(e => { e.textContent = VERSI_APP; });
 document.querySelectorAll('.verKet').forEach(e => { e.textContent = VERSI_KET; });
 
-// Kirim ke server. Selalu mengembalikan objek JSON, atau melempar error dengan pesan yang jelas.
+// ================== ANTI-GLITCH VIEWPORT & KEYBOARD ==================
+const sinkronViewport = () => {
+  const vv = window.visualViewport;
+  const h = vv ? vv.height : window.innerHeight;
+  const topOffset = vv ? vv.offsetTop : 0;
+  const kb = vv ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
+
+  document.documentElement.style.setProperty('--vvh', Math.round(h) + 'px');
+  document.documentElement.style.setProperty('--kb', kb + 'px');
+  document.body.classList.toggle('kb-open', kb > 110);
+
+  // Sesuaikan posisi .layar agar sejajar dengan visualViewport yang aktif
+  document.querySelectorAll('.layar').forEach(el => {
+    el.style.top = topOffset + 'px';
+    el.style.height = Math.round(h) + 'px';
+  });
+};
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', sinkronViewport);
+  window.visualViewport.addEventListener('scroll', sinkronViewport);
+}
+window.addEventListener('resize', sinkronViewport);
+sinkronViewport();
+
+document.addEventListener('focusin', (e) => {
+  sinkronViewport();
+  const target = e.target;
+  if (target && /INPUT|SELECT|TEXTAREA/.test(target.tagName)) {
+    const kotak = target.closest('.kotak') || target.closest('.opsiKotak');
+    setTimeout(() => {
+      sinkronViewport();
+      if (kotak) {
+        const layar = kotak.closest('.layar');
+        const targetRect = target.getBoundingClientRect();
+        const availH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        if (layar && (targetRect.bottom > availH - 12 || targetRect.top < 12)) {
+          const delta = targetRect.top - Math.max(16, availH * 0.25);
+          layar.scrollTop += delta;
+        }
+      } else {
+        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    }, 220);
+  }
+});
+
+document.addEventListener('focusout', () => {
+  setTimeout(sinkronViewport, 180);
+});
+
+// ================== UI TOMBOL PILIHAN (CHOICE PICKER) ==================
+// opsiList: [{ value, label, sub, badge }]
+const bukaPilihan = ({ judul, keterangan = '', opsi = [], nilaiAktif = '' }) => new Promise(resolve => {
+  $('opsiJudul').textContent = judul || 'Pilih opsi';
+  $('opsiKet').textContent = keterangan;
+  $('opsiKet').classList.toggle('hidden', !keterangan);
+
+  const list = $('opsiList');
+  list.innerHTML = '';
+
+  const tutup = (val) => {
+    $('opsiScreen').classList.add('hidden');
+    $('opsiBatal').onclick = null;
+    $('opsiScreen').onclick = null;
+    resolve(val);
+  };
+
+  opsi.forEach(item => {
+    const aktif = String(item.value) === String(nilaiAktif);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'opsiBtn' + (aktif ? ' aktif' : '');
+    btn.innerHTML = `
+      <span>
+        <span class="opsiJudul">${esc(item.label)}</span>
+        ${item.sub ? `<span class="opsiSub">${esc(item.sub)}</span>` : ''}
+      </span>
+      <span class="opsiBadge">${esc(item.badge || (aktif ? 'Dipilih' : 'Pilih'))}</span>
+    `;
+    btn.onclick = () => tutup(item.value);
+    list.appendChild(btn);
+  });
+
+  $('opsiBatal').onclick = () => tutup(null);
+  $('opsiScreen').onclick = (e) => { if (e.target === $('opsiScreen')) tutup(null); };
+  $('opsiScreen').classList.remove('hidden');
+  $('opsiKotak').scrollTop = 0;
+  sinkronViewport();
+});
+
 const kirimJSON = async (data, batas = 90000) => {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), batas);
@@ -666,7 +802,6 @@ const toast = (pesan) => {
   clearTimeout(toast.w); toast.w = setTimeout(() => t.classList.add('hidden'), 5000);
 };
 
-// Kotak PIN: pindah otomatis ke kotak berikutnya
 const setupPin = (selector) => {
   const boxes = document.querySelectorAll(selector);
   boxes.forEach((box, i) => {
@@ -678,12 +813,13 @@ const setupPin = (selector) => {
   });
 };
 setupPin('.log-pin'); setupPin('.del-pin'); setupPin('.tb-pin'); setupPin('.mo-pin');
-// Kotak konfirmasi di dalam aplikasi. Hasil: true (Ya) atau false (Batal)
+
 const tanya = (judul, isi, labelOk = 'Ya, lanjutkan') => new Promise(ok => {
   $('konfirmJudul').textContent = judul;
   $('konfirmIsi').textContent = isi;
   $('konfirmOk').textContent = labelOk;
   $('konfirmScreen').classList.remove('hidden');
+  sinkronViewport();
   const selesai = (v) => {
     $('konfirmScreen').classList.add('hidden');
     $('konfirmOk').onclick = null; $('konfirmBatal').onclick = null;
@@ -694,11 +830,11 @@ const tanya = (judul, isi, labelOk = 'Ya, lanjutkan') => new Promise(ok => {
 });
 const bacaPin = (selector) => [...document.querySelectorAll(selector)].map(b => b.value).join('');
 
-// Nama penanggung jawab tidak lagi disimpan: harus diisi ulang setiap kali mencatat.
 try { localStorage.removeItem('lastPj'); sessionStorage.removeItem('lastPj'); } catch (x) {}
 
 // ================== SIDEBAR ==================
 const bukaSidebar = () => {
+  sinkronViewport();
   $('sidebar').classList.add('buka'); $('sidebar').setAttribute('aria-hidden', 'false');
   $('sidebarOverlay').classList.remove('hidden');
 };
@@ -709,7 +845,12 @@ const tutupSidebar = () => {
 const menuLaporan = () => { tutupSidebar(); bukaLaporan(); };
 const menuReset = () => { tutupSidebar(); bukaTutupBuku(); };
 const menuModal = () => { tutupSidebar(); bukaModalAwal(); };
-document.addEventListener('keydown', e => { if (e.key === 'Escape') tutupSidebar(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (!$('opsiScreen').classList.contains('hidden')) $('opsiBatal').click();
+    else tutupSidebar();
+  }
+});
 
 // ================== MASUK ==================
 $('formLogin').addEventListener('submit', async (e) => {
@@ -726,18 +867,18 @@ $('formLogin').addEventListener('submit', async (e) => {
   finally { btn.disabled = false; btn.textContent = 'Masuk'; }
 });
 
-const tampilkanAplikasi = () => { $('loginScreen').classList.add('hidden'); $('appContent').classList.remove('hidden'); muatDataOnline(); };
+const tampilkanAplikasi = () => { $('loginScreen').classList.add('hidden'); $('appContent').classList.remove('hidden'); sinkronViewport(); muatDataOnline(); };
 const logout = () => { sessionStorage.removeItem('isLoggedIn'); location.reload(); };
 
 // ================== DATA ==================
-let dataKeuangan = [];   // semua transaksi dari semua periode
-let daftarPeriode = [];  // [{nama, saldoAwal, mulai, tutup, status, ...}]
-let periodeAktif = '';   // periode kepengurusan yang sedang berjalan
-let periodeLihat = '';   // periode yang sedang dilihat (aktif atau arsip)
+let dataKeuangan = [];
+let daftarPeriode = [];
+let periodeAktif = '';
+let periodeLihat = '';
 const hariIni = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
 let filterBulan = hariIni().slice(0, 7);
 let filterKategori = '', searchQuery = '', itemHapusAktif = null, jenisForm = '', idForm = '';
-let rentangBulan = 1; // 1 = bulan terpilih saja, 2/3 = beserta bulan-bulan sebelumnya, 0 = semua
+let rentangBulan = 1;
 $('filterBulan').value = filterBulan;
 
 const formatRupiah = (n) => new Intl.NumberFormat('id-ID', { style:'currency', currency:'IDR', minimumFractionDigits:0 }).format(n);
@@ -765,14 +906,9 @@ const formatJam = (j) => {
 const labelKategori = (k) => k === 'Dan Lain-Lain' ? 'Lain-lain' : k;
 const namaPj = (i) => String(i.penanggungjawab || i.pj || '').trim();
 
-// ----- Penggabungan nama penanggung jawab -----
-// Huruf besar/kecil, spasi ganda, dan tanda baca diabaikan.
 const tokenNama = (s) => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean);
 const judulNama = (s) => s.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
-// Nama yang kata-katanya seluruhnya ada di nama lain yang lebih lengkap dianggap orang yang sama
-// (contoh: "budi" + "BUDI SANTOSO" + "Budi Santoso" = "Budi Santoso").
-// Bila nama pendek cocok dengan lebih dari satu orang (Budi Santoso & Budi Hartono), TIDAK digabung.
 const petaNamaPj = (daftarNama) => {
   const hit = new Map();
   daftarNama.forEach(n => {
@@ -799,22 +935,60 @@ const isiDaftarPj = () => {
   $('daftarPj').innerHTML = [...s].map(n => `<option value="${esc(n)}">`).join('');
 };
 
-// ----- Periode kepengurusan -----
 const infoPeriode = (nama) => daftarPeriode.find(p => p.nama === nama) || null;
 const saldoAwalPeriode = (nama) => { const p = infoPeriode(nama); return p ? (Number(p.saldoAwal) || 0) : 0; };
 const periodeItem = (i) => String(i.periode || '').trim() || periodeAktif;
 const dataPeriodeLihat = () => dataKeuangan.filter(i => periodeItem(i) === periodeLihat);
 const lihatArsip = () => periodeLihat !== periodeAktif;
 
+const urutDaftarPeriode = () => {
+  const nama = daftarPeriode.length ? daftarPeriode.map(p => p.nama) : [periodeAktif || 'Periode berjalan'];
+  return [periodeAktif, ...nama.filter(n => n !== periodeAktif).reverse()].filter(Boolean);
+};
+
 const isiPilihPeriode = () => {
-  const nama = daftarPeriode.length ? daftarPeriode.map(p => p.nama) : [periodeAktif];
-  const urut = [periodeAktif, ...nama.filter(n => n !== periodeAktif).reverse()];
+  const urut = urutDaftarPeriode();
   $('pilihPeriode').innerHTML = urut.map(n =>
     `<option value="${esc(n)}">${n === periodeAktif ? '● ' + esc(n) + ' (aktif)' : '📁 ' + esc(n) + ' (arsip)'}</option>`).join('');
   $('pilihPeriode').value = periodeLihat;
 };
 
-// Alamat gambar: bisa data URL (baru difoto), link, atau ID file Google Drive
+const terapkanPeriodeTerpilih = (nama) => {
+  if (!nama || nama === periodeLihat) return;
+  periodeLihat = nama;
+  $('pilihPeriode').value = periodeLihat;
+  filterBulan = lihatArsip() ? bulanTerbaruPeriode() : hariIni().slice(0, 7);
+  $('filterBulan').value = filterBulan;
+  updateUI();
+  window.scrollTo(0, 0);
+};
+
+// Membuka UI pilihan untuk tombol periode (#periodeTag)
+const bukaPilihanPeriode = async () => {
+  const urut = urutDaftarPeriode();
+  const opsi = urut.map(n => {
+    const p = infoPeriode(n);
+    const aktif = n === periodeAktif;
+    const ketTanggal = p
+      ? (aktif ? `Mulai ${p.mulai || '-'} · Saldo awal ${formatRupiah(p.saldoAwal || 0)}`
+               : `Arsip ${p.mulai || '-'} s/d ${p.tutup || 'selesai'}`)
+      : (aktif ? 'Periode sedang berjalan' : 'Arsip periode');
+    return {
+      value: n,
+      label: n,
+      sub: ketTanggal,
+      badge: n === periodeLihat ? 'Dipilih' : (aktif ? 'Aktif' : 'Arsip')
+    };
+  });
+  const dipilih = await bukaPilihan({
+    judul: 'Pilih periode kepengurusan',
+    keterangan: 'Pilih periode aktif atau arsip kepengurusan untuk dilihat.',
+    opsi,
+    nilaiAktif: periodeLihat
+  });
+  if (dipilih) terapkanPeriodeTerpilih(dipilih);
+};
+
 const fotoSrc = (f) => {
   if (!f) return '';
   const s = String(f);
@@ -825,19 +999,17 @@ const fotoSrc = (f) => {
   return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(s) + '&sz=w1000';
 };
 
-// Cadangan: bila server mengirim nama kolom alternatif, samakan ke nama yang dipakai aplikasi
 const rapikan = (daftar) => daftar.map(i => {
   if (!i.transaksi && i.kategori) i.transaksi = i.kategori;
   if (!i.uraian && i.keterangan) i.uraian = i.keterangan;
   return i;
 });
 
-// Mengembalikan true bila berhasil
 const muatDataOnline = async () => {
   try {
     const res = await fetch(API_URL + '?v=2');
     const hasil = await res.json();
-    if (Array.isArray(hasil)) { // server lama (belum diperbarui)
+    if (Array.isArray(hasil)) {
       dataKeuangan = rapikan(hasil); daftarPeriode = []; periodeAktif = 'Periode berjalan';
     } else {
       dataKeuangan = rapikan(Array.isArray(hasil.data) ? hasil.data : []);
@@ -857,7 +1029,6 @@ const muatDataOnline = async () => {
 
 const teksTimer = (s) => `Batal (${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')})`;
 
-// Kunci bulan 'yyyy-mm' dari tanggal transaksi ('' bila tanggal tidak terbaca)
 const bulanItem = (i) => {
   const t = parseDateValue(i.tanggal); if (!t) return '';
   const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
@@ -879,10 +1050,8 @@ const updateUI = () => {
   const infoP = infoPeriode(periodeLihat);
   const awalPer = saldoAwalPeriode(periodeLihat);
 
-  // Penanda periode di halaman utama (pilihan periode ada di sidebar)
-  $('periodeTag').textContent = (arsip ? '📁 Arsip: ' : '● Periode: ') + (periodeLihat || '…') + ' ▾';
+  $('periodeTagTeks').textContent = (arsip ? '📁 Arsip: ' : '● Periode: ') + (periodeLihat || '…');
 
-  // Tampilan arsip: hanya baca
   $('barAksi').classList.toggle('hidden', arsip);
   $('btnTutupBuku').classList.toggle('hidden', arsip);
   $('btnMenuModal').classList.toggle('hidden', arsip);
@@ -894,7 +1063,6 @@ const updateUI = () => {
       `<button type="button" class="btn" onclick="kembaliAktif()">Kembali ke periode aktif</button>`;
   }
 
-  // Total periode
   let masuk = 0, keluar = 0;
   data.forEach(i => {
     if (i.pendingDelete) return;
@@ -911,7 +1079,6 @@ const updateUI = () => {
     .sort((a, b) => (parseDateValue(b.tanggal) - parseDateValue(a.tanggal)) || formatJam(b.jam).localeCompare(formatJam(a.jam)));
   const diBulan = semuaUrut.filter(i => filterBulan === '' || bulanItem(i) === filterBulan);
 
-  // Ringkasan bulan terpilih (selalu satu bulan)
   let bm = 0, bk = 0;
   diBulan.forEach(i => {
     if (i.pendingDelete) return;
@@ -921,13 +1088,11 @@ const updateUI = () => {
   $('totalPengeluaran').textContent = formatRupiah(bk);
   $('saldoAkhir').textContent = formatRupiah(bm - bk);
 
-  // Info kelengkapan foto
   const aktif = diBulan.filter(i => !i.pendingDelete);
   const tanpaFoto = aktif.filter(i => !i.foto).length;
   $('infoFoto').textContent = !aktif.length ? '' :
     (tanpaFoto ? `📷 ${tanpaFoto} dari ${aktif.length} transaksi belum ada foto bukti.` : '✓ Semua transaksi bulan ini sudah ada foto bukti.');
 
-  // Rentang riwayat: bulan terpilih + (N-1) bulan sebelumnya, atau semua bulan
   let diRentang = semuaUrut;
   if (filterBulan !== '' && rentangBulan > 0) {
     const akhirIdx = indeksBulan(filterBulan), awalIdx = akhirIdx - (rentangBulan - 1);
@@ -937,7 +1102,6 @@ const updateUI = () => {
     });
   }
 
-  // Daftar riwayat (rentang bulan + kategori + pencarian)
   const q = searchQuery.toLowerCase();
   const tampil = diRentang.filter(i =>
     (filterKategori === '' || i.transaksi === filterKategori) &&
@@ -950,7 +1114,6 @@ const updateUI = () => {
     return;
   }
 
-  // Jumlah hasil dan total masuk/keluar dari hasil yang tampil
   let hm = 0, hk = 0, n = 0;
   tampil.forEach(i => {
     if (i.pendingDelete) return;
@@ -976,7 +1139,6 @@ const updateUI = () => {
     </div>`;
   };
 
-  // Bila menampilkan lebih dari satu bulan, kelompokkan dengan judul bulan
   const kelompok = rentangBulan !== 1;
   let html = '', kunciTerakhir = null;
   tampil.forEach(i => {
@@ -995,14 +1157,11 @@ $('filterRentang').addEventListener('change', e => { rentangBulan = Number(e.tar
 $('searchInput').addEventListener('input', e => { searchQuery = e.target.value; updateUI(); });
 
 $('pilihPeriode').addEventListener('change', e => {
-  periodeLihat = e.target.value;
-  filterBulan = lihatArsip() ? bulanTerbaruPeriode() : hariIni().slice(0, 7);
-  $('filterBulan').value = filterBulan;
-  updateUI();
+  terapkanPeriodeTerpilih(e.target.value);
   tutupSidebar();
-  window.scrollTo(0, 0);
 });
 const kembaliAktif = () => {
+  if (!periodeAktif || periodeAktif === periodeLihat) return;
   periodeLihat = periodeAktif;
   $('pilihPeriode').value = periodeLihat;
   filterBulan = hariIni().slice(0, 7);
@@ -1014,7 +1173,6 @@ const kembaliAktif = () => {
 // ================== FOTO ==================
 let fotoData = '';
 
-// Kecilkan foto (maks 1200 px, JPEG) supaya ringan dikirim
 const kompres = (file, maks = 1200, mutu = 0.72) => new Promise((ok, gagal) => {
   const url = URL.createObjectURL(file), img = new Image();
   img.onload = () => {
@@ -1059,6 +1217,7 @@ const lihatFoto = (id) => {
   $('fotoBesar').src = fotoSrc(item.foto);
   $('fotoCap').textContent = (item.uraian || labelKategori(item.transaksi)) + ' · ' + formatTanggal(item.tanggal) + ' · ' + formatRupiah(item.jumlah);
   $('fotoScreen').classList.remove('hidden');
+  sinkronViewport();
 };
 const tutupFoto = () => { $('fotoScreen').classList.add('hidden'); $('fotoBesar').removeAttribute('src'); };
 $('fotoScreen').addEventListener('click', e => { if (e.target === $('fotoScreen')) tutupFoto(); });
@@ -1067,8 +1226,6 @@ $('fotoScreen').addEventListener('click', e => { if (e.target === $('fotoScreen'
 const bukaForm = (jenis) => {
   if (lihatArsip()) { toast('Arsip hanya bisa dilihat. Kembali ke periode aktif untuk mencatat.'); return; }
   jenisForm = jenis;
-  // id dibuat sekali per formulir: kalau pengguna menekan Simpan lagi setelah sinyal putus,
-  // server mengenali id yang sama dan tidak menyimpan data dobel.
   idForm = '_' + Math.random().toString(36).slice(2, 11);
   const masuk = jenis === 'PEMASUKAN';
   $('judulForm').textContent = masuk ? 'Catat uang masuk' : 'Catat uang keluar';
@@ -1078,13 +1235,14 @@ const bukaForm = (jenis) => {
   resetFoto();
   $('tanggal').value = hariIni();
   isiDaftarPj();
-  $('pj').value = ''; // penanggung jawab selalu kosong: harus diisi ulang
+  $('pj').value = '';
   $('formScreen').classList.remove('hidden');
+  $('formScreen').scrollTop = 0;
+  sinkronViewport();
   setTimeout(() => $('jumlah').focus(), 100);
 };
 const tutupForm = () => $('formScreen').classList.add('hidden');
 
-// Format Rp otomatis saat mengetik (contoh: 25000 menjadi Rp 25.000)
 $('jumlah').addEventListener('input', (e) => {
   const angka = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
   e.target.value = angka ? 'Rp ' + Number(angka).toLocaleString('id-ID') : '';
@@ -1144,6 +1302,8 @@ const konfirmasiHapus = (id) => {
     (namaPj(item) ? `<br>PJ: ${esc(namaPj(item))}` : '');
   $('alasanHapus').value = '';
   $('deleteScreen').classList.remove('hidden');
+  $('deleteScreen').scrollTop = 0;
+  sinkronViewport();
   document.querySelectorAll('.del-pin').forEach(b => b.value = '');
   $('pesanErrorHapus').style.display = 'none';
   setTimeout(() => $('alasanHapus').focus(), 100);
@@ -1188,7 +1348,6 @@ const jalankanTimerHapus = (id, alasan) => {
         dataKeuangan = dataKeuangan.filter(x => String(x.id) !== String(id));
         toast('Data sudah dihapus.');
       } catch (x) {
-        // Gagal di server: kembalikan data ke daftar supaya tidak terlihat terhapus padahal masih ada
         item.pendingDelete = false;
         toast((x.message || 'Gagal menghapus.') + ' Data dikembalikan.');
       }
@@ -1222,6 +1381,8 @@ const bukaTutupBuku = () => {
   document.querySelectorAll('.tb-pin').forEach(b => b.value = '');
   $('pesanErrorTutup').style.display = 'none';
   $('tutupScreen').classList.remove('hidden');
+  $('tutupScreen').scrollTop = 0;
+  sinkronViewport();
   setTimeout(() => $('namaBaru').focus(), 100);
 };
 const tutupModalTutup = () => $('tutupScreen').classList.add('hidden');
@@ -1257,7 +1418,6 @@ $('formTutup').addEventListener('submit', async (e) => {
     if (h.status === 'success') { await selesaiTutup(nama); }
     else { tampilErr(h.message || 'Gagal melakukan reset.'); }
   } catch (x) {
-    // Bisa saja sudah berhasil di server walau balasan terputus: periksa dulu sebelum menyatakan gagal
     const ok = await muatDataOnline();
     if (ok && periodeAktif.toLowerCase() === nama.toLowerCase()) { await selesaiTutup(nama); }
     else { tampilErr(x.message || 'Gagal melakukan reset. Periksa internet lalu coba lagi.'); }
@@ -1274,6 +1434,8 @@ const bukaModalAwal = () => {
   document.querySelectorAll('.mo-pin').forEach(b => b.value = '');
   $('pesanErrorModal').style.display = 'none';
   $('modalScreen').classList.remove('hidden');
+  $('modalScreen').scrollTop = 0;
+  sinkronViewport();
   setTimeout(() => $('modalJumlah').focus(), 100);
 };
 const tutupModalAwal = () => $('modalScreen').classList.add('hidden');
@@ -1317,7 +1479,6 @@ $('formModal').addEventListener('submit', async (e) => {
 // ================== LOGO EKSTRAKURIKULER ==================
 const logoAktif = () => { try { return localStorage.getItem('logoEkskul') || LOGO_BAWAAN || ''; } catch (x) { return LOGO_BAWAAN || ''; } };
 
-// Kecilkan logo (maks 300 px), tetap PNG agar latar transparan tidak hilang
 const kecilkanLogo = (file, maks = 300) => new Promise((ok, gagal) => {
   const url = URL.createObjectURL(file), img = new Image();
   img.onload = () => {
@@ -1353,8 +1514,7 @@ $('btnHapusLogo').addEventListener('click', () => {
   segarkanLogoUI(); renderLaporan();
 });
 
-// ================== CATATAN KENDALA (tampil di laporan cetak) ==================
-// Disimpan per laporan: periode kepengurusan + jenis laporan + minggu/bulan yang dipilih.
+// ================== CATATAN KENDALA ==================
 let kunciKendalaAktif = null;
 const bacaKendala = (k) => { try { return localStorage.getItem(k) || ''; } catch (x) { return ''; } };
 const simpanKendala = (k, v) => { try { if (v.trim()) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (x) {} };
@@ -1363,11 +1523,11 @@ $('lapKendala').addEventListener('input', () => {
   renderLaporan();
 });
 
-// ================== TATA LETAK CETAK: TANDA TANGAN DI DASAR HALAMAN ==================
-const JARAK_BAWAAN_MM = 22;   // jarak awal catatan kendala ke tanda tangan
+// ================== TATA LETAK CETAK ==================
+const JARAK_BAWAAN_MM = 22;
 const MM_KE_PX = 96 / 25.4;
-const TINGGI_ISI_HALAMAN_MM = 268;  // tinggi isi satu halaman A4 (297 - margin 28 = 269) dikurangi cadangan 1 mm
-const TINGGI_HITUNG_MM = 270;       // dipakai untuk menaksir jumlah halaman (sedikit longgar agar tidak kelebihan halaman kosong)
+const TINGGI_ISI_HALAMAN_MM = 268;
+const TINGGI_HITUNG_MM = 270;
 
 const bacaJarakTtd = () => {
   try { const v = Number(localStorage.getItem('ttdJarak')); return v >= 5 && v <= 120 ? v : JARAK_BAWAAN_MM; }
@@ -1375,14 +1535,11 @@ const bacaJarakTtd = () => {
 };
 const bacaTtdDasar = () => { try { return localStorage.getItem('ttdDasar') !== '0'; } catch (x) { return true; } };
 
-// Taksir jumlah halaman cetak memakai salinan tak terlihat selebar isi A4 (182 mm),
-// lalu atur tinggi minimum dokumen = jumlah halaman x 268 mm, sehingga tanda tangan menempel di dasar halaman terakhir.
 const hitungTinggiCetak = () => {
   const doc = $('laporanDoc');
   if (!doc || !doc.firstElementChild) return;
   const probe = document.createElement('div');
   probe.id = 'laporanProbe';
-  // Gambar tidak perlu dimuat lagi (tinggi gambar sudah tetap lewat CSS)
   probe.innerHTML = doc.innerHTML.replace(/(<img\b[^>]*?)\ssrc="[^"]*"/g, '$1 src="data:image/gif;base64,R0lGODlhAQABAAAAACw="');
   document.body.appendChild(probe);
   const tinggi = probe.offsetHeight;
@@ -1391,7 +1548,6 @@ const hitungTinggiCetak = () => {
   doc.style.setProperty('--tinggiCetak', (halaman * TINGGI_ISI_HALAMAN_MM) + 'mm');
 };
 
-// Terapkan pengaturan jarak dan posisi tanda tangan ke dokumen laporan
 const terapkanTataCetak = () => {
   const doc = $('laporanDoc');
   const jarak = Math.min(120, Math.max(5, Number($('lapJarak').value) || JARAK_BAWAAN_MM));
@@ -1409,7 +1565,6 @@ $('lapTtdDasar').addEventListener('change', () => {
   try { localStorage.setItem('ttdDasar', $('lapTtdDasar').checked ? '1' : '0'); } catch (x) {}
   terapkanTataCetak();
 });
-// Hitung ulang tepat sebelum jendela cetak terbuka
 window.addEventListener('beforeprint', () => {
   if (!$('laporanScreen').classList.contains('hidden')) terapkanTataCetak();
 });
@@ -1430,16 +1585,17 @@ const bukaLaporan = (mode) => {
   } catch (x) {}
   $('lapJarak').value = bacaJarakTtd();
   $('lapTtdDasar').checked = bacaTtdDasar();
-  kunciKendalaAktif = null; // muat ulang catatan kendala sesuai laporan yang dipilih
+  kunciKendalaAktif = null;
   segarkanLogoUI();
   $('laporanScreen').classList.remove('hidden');
   $('laporanScreen').scrollTop = 0;
+  sinkronViewport();
   renderLaporan();
 };
 const tutupLaporan = () => $('laporanScreen').classList.add('hidden');
 
 const renderLaporan = () => {
-  const mode = $('lapJenis').value; // mingguan | bulanan | periode
+  const mode = $('lapJenis').value;
   $('wrapMinggu').classList.toggle('hidden', mode !== 'mingguan');
   $('wrapBulan').classList.toggle('hidden', mode !== 'bulanan');
   $('lapPeriodeInfo').textContent = 'Kepengurusan: ' + periodeLihat + (lihatArsip() ? ' (arsip)' : ' (aktif)');
@@ -1452,7 +1608,6 @@ const renderLaporan = () => {
   let judul, periode, kunciRentang, saldoAwal = saldoAwalPeriode(periodeLihat), baris;
 
   if (mode === 'periode') {
-    // Seluruh bulan dalam satu kepengurusan
     baris = valid.slice().sort(urut);
     judul = 'LAPORAN PERTANGGUNGJAWABAN KEUANGAN';
     kunciRentang = 'semua';
@@ -1470,7 +1625,7 @@ const renderLaporan = () => {
     } else {
       const v = $('lapMinggu').value; if (!v) return;
       const [y, m, d] = v.split('-').map(Number);
-      const dow = (new Date(y, m - 1, d).getDay() + 6) % 7; // Senin = 0
+      const dow = (new Date(y, m - 1, d).getDay() + 6) % 7;
       mulai = new Date(y, m - 1, d - dow); akhir = new Date(y, m - 1, d - dow + 6);
       kunciRentang = mulai.getFullYear() + '-' + String(mulai.getMonth() + 1).padStart(2, '0') + '-' + String(mulai.getDate()).padStart(2, '0');
     }
@@ -1483,7 +1638,6 @@ const renderLaporan = () => {
     baris = valid.filter(i => { const t = parseDateValue(i.tanggal); return t >= t0 && t <= t1; }).sort(urut);
   }
 
-  // Catatan kendala: dimuat dari penyimpanan saat jenis laporan / minggu / bulan / periode berganti
   const kunciK = 'kendala|' + periodeLihat + '|' + mode + '|' + kunciRentang;
   if (kunciK !== kunciKendalaAktif) { kunciKendalaAktif = kunciK; $('lapKendala').value = bacaKendala(kunciK); }
   const kendala = $('lapKendala').value.trim();
@@ -1492,7 +1646,6 @@ const renderLaporan = () => {
   baris.forEach(i => { if (i.jenis === 'PEMASUKAN') tm += jml(i); else if (i.jenis === 'PENGELUARAN') tk += jml(i); });
   const saldoAkhir = saldoAwal + tm - tk;
 
-  // Per kategori
   const kat = {};
   baris.forEach(i => {
     const k = labelKategori(i.transaksi) || '-';
@@ -1500,7 +1653,6 @@ const renderLaporan = () => {
     if (i.jenis === 'PEMASUKAN') kat[k].m += jml(i); else if (i.jenis === 'PENGELUARAN') kat[k].k += jml(i);
   });
 
-  // Rekap per bulan (hanya laporan satu periode)
   const bagianBulan = mode === 'periode' ? (() => {
     const pb = {};
     baris.forEach(i => {
@@ -1518,7 +1670,6 @@ const renderLaporan = () => {
       <table class="tb"><thead><tr><th>Bulan</th><th>Saldo awal</th><th>Masuk</th><th>Keluar</th><th>Saldo akhir</th></tr></thead><tbody>${trs}</tbody></table>` : '';
   })() : '';
 
-  // Rincian transaksi (laporan satu periode dikelompokkan per bulan dengan subjumlah)
   let run = saldoAwal, kunci = null, sm = 0, sk = 0, rowsHtml = '';
   const tutupBulan = () => {
     if (kunci === null) return;
@@ -1646,13 +1797,6 @@ $('btnCetak').addEventListener('click', async () => {
   }
   terapkanTataCetak();
   window.print();
-});
-
-// Android: pastikan kolom yang diketik tidak tertutup keyboard
-document.addEventListener('focusin', (e) => {
-  if (e.target.closest && e.target.closest('.kotak') && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) {
-    setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300);
-  }
 });
 
 if (sessionStorage.getItem('isLoggedIn') === 'true') tampilkanAplikasi();
