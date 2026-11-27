@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <!--
   Keuangan Wirausaha KIR TEI
-  VERSI TERBARU : v3.9.2 (22 November 2026)
+  VERSI TERBARU : v3.10.0 (28 November 2026)
+  PERUBAHAN v3.10.0: Tutorial pengguna baru + tombol Tutorial di menu samping; PIN login bisa diingat di perangkat
+                   (hilang saat Keluar); keyboard tidak lagi membuat tampilan meloncat; label tombol pilihan
+                   ikut berubah saat data dimuat; saran nama penanggung jawab berupa tombol; perbaikan ekor script
+                   yang rusak (teks kode tampil di halaman dan masuk otomatis tidak berjalan).
   PERUBAHAN v3.9.2: Cetak laporan: "Mengetahui / tanda tangan" selalu di dasar HALAMAN TERAKHIR
                    (juga bila laporan lebih dari 1 halaman). Jarak dari catatan kendala bisa diatur
                    (5 - 120 mm) lewat menu Cetak laporan, ada pilihan "Tanda tangan di dasar kertas".
@@ -247,15 +251,16 @@ input,select{min-height:48px}
 html,body{min-height:100%;overscroll-behavior-x:none}
 body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
 /* Bar aksi tetap di bawah saat normal, tetapi tidak menutupi form ketika keyboard terbuka. */
-.aksi{position:fixed;bottom:0;transform:translateY(0);transition:transform .16s ease;will-change:transform}
-body.keyboard-open .aksi{transform:translateY(120%);pointer-events:none}
+.aksi{position:fixed;bottom:0}
+/* Saat mengetik, bar tombol bawah disembunyikan langsung (tanpa animasi) supaya tidak menutupi form
+   dan tidak berkedip ketika keyboard naik-turun. */
+body.keyboard-open .aksi{display:none}
 /* Modal mengikuti tinggi visual viewport, bukan tinggi layar sebelum keyboard muncul. */
 .layar{top:var(--atas-viewport);height:var(--tinggi-viewport);bottom:auto;min-height:0;overflow-y:auto;
   -webkit-overflow-scrolling:touch;align-items:flex-start}
 .kotak{max-height:calc(var(--tinggi-viewport) - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow-y:auto;overscroll-behavior:contain;margin:auto;flex:0 0 auto}
-body.keyboard-open .layar{align-items:flex-start;padding-top:8px;padding-bottom:8px}
-body.keyboard-open .kotak{max-height:calc(var(--tinggi-viewport) - 16px);margin:0 auto}
+/* v3.10: tidak ada lagi perubahan posisi/ukuran kotak saat keyboard muncul (sumber loncatan tampilan). */
 /* Area sentuh pilihan Android lebih lega dan konsisten. */
 select{min-height:52px;padding:12px 42px 12px 14px;font-size:16px;line-height:1.35;border-radius:10px;
   color:var(--teks);-webkit-appearance:auto;appearance:auto}
@@ -300,8 +305,40 @@ input,textarea{font-size:16px}
 .pilihanItem.aktif .pilihanRadio:after{content:"";width:11px;height:11px;border-radius:50%;background:var(--biru)}
 @media(min-width:700px){#pilihanOverlay{align-items:center}.pilihanPanel{max-height: min(70vh,620px)}}
 
+/* Saran nama penanggung jawab (pengganti daftar bawaan browser yang sering berkedip di Android) */
+.saranPj{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.saranChip{min-height:40px;padding:8px 14px;border:1px solid #c9dcf3;border-radius:999px;background:#eef4fb;color:var(--biru);
+  font:inherit;font-size:15px;font-weight:600}
+.saranChip:active{background:#d9e8fa}
+
+/* Masuk otomatis */
+#loginAuto{text-align:center}
+#loginAuto p{margin:6px 0 16px;color:var(--abu)}
+#loginAuto .btn+.btn{margin-top:10px}
+.ingatPin{margin:0 0 14px;font-weight:600}
+.ingatPin small{display:block;font-weight:400;color:var(--abu);font-size:12px}
+
+/* Tutorial */
+#tutorScreen{position:fixed;inset:0;z-index:900;background:rgba(20,30,45,.18)}
+#tutorPanel{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;
+  background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 10px 36px rgba(0,0,0,.35);max-height:62dvh;overflow:auto}
+#tutorPanel.atas{bottom:auto;top:calc(12px + env(safe-area-inset-top))}
+.tutorAtas{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--abu);margin-bottom:4px}
+.tutorAtas button{border:0;background:none;color:var(--abu);text-decoration:underline;min-height:40px;padding:0 6px}
+#tutorJudul{margin:0 0 6px;font-size:19px;color:var(--biru)}
+#tutorIsi{font-size:15px;line-height:1.55}
+#tutorIsi .contohNama{font-size:13px}
+#tutorTitik{display:flex;justify-content:center;gap:6px;margin:12px 0}
+#tutorTitik i{width:8px;height:8px;border-radius:50%;background:#d0d5dd}
+#tutorTitik i.on{background:var(--biru);width:20px;border-radius:4px}
+.tutorTombol{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
+.tutorSorot{outline:4px solid #ffb300!important;outline-offset:3px;border-radius:12px;animation:denyut 1.2s ease-in-out infinite}
+@keyframes denyut{50%{outline-color:rgba(255,179,0,.3)}}
+@media(prefers-reduced-motion:reduce){.tutorSorot{animation:none}}
+
 @page{size:A4;margin:14mm}
 @media print{
+  #tutorScreen,#pilihanOverlay{display:none!important}
   body{background:#fff;padding:0;font-size:12px}
   body>*{display:none!important}
   #laporanScreen{display:block!important;position:static;background:#fff;padding:0;overflow:visible}
@@ -341,8 +378,16 @@ input,textarea{font-size:16px}
         <input type="password" class="log-pin" maxlength="1" required inputmode="numeric" aria-label="PIN angka 3">
         <input type="password" class="log-pin" maxlength="1" required inputmode="numeric" aria-label="PIN angka 4">
       </div>
+      <label class="cek ingatPin"><input type="checkbox" id="ingatPin" checked>
+        <span>Ingat PIN di perangkat ini<small>Tidak perlu mengetik PIN lagi. Hilang bila menekan Keluar.</small></span></label>
       <button type="submit" class="btn" id="btnLogin">Masuk</button>
     </form>
+    <div id="loginAuto" class="hidden">
+      <h2 style="margin-bottom:0">Masuk otomatis</h2>
+      <p id="loginAutoTeks">Memeriksa PIN yang tersimpan…</p>
+      <button type="button" class="btn hidden" id="btnAutoUlang">Coba lagi</button>
+      <button type="button" class="btn abu hidden" id="btnAutoManual">Ketik PIN sendiri</button>
+    </div>
     <p id="pesanError" class="galat"></p>
   </div>
 </div>
@@ -476,8 +521,8 @@ input,textarea{font-size:16px}
       </div>
       <div class="fg">
         <label for="pj">Nama penanggung jawab <span class="merah">*wajib</span></label>
-        <input type="text" id="pj" required list="daftarPj" autocomplete="off" autocapitalize="words" placeholder="Contoh: Budi Santoso">
-        <datalist id="daftarPj"></datalist>
+        <input type="text" id="pj" required autocomplete="off" autocapitalize="words" placeholder="Contoh: Budi Santoso" aria-controls="saranPj">
+        <div id="saranPj" class="saranPj hidden" aria-label="Saran nama penanggung jawab"></div>
         <div class="contohNama">
           <b>Wajib nama asli sesuai ID card</b> (KTP / kartu pelajar), bukan nama panggilan atau singkatan.<br>
           ✅ Contoh benar: <b>Budi Santoso</b><br>
@@ -601,7 +646,10 @@ input,textarea{font-size:16px}
     <button type="button" class="menuItem" id="btnMenuModal" onclick="menuModal()">💰 <span>Atur modal awal<small>Uang kas awal periode ini. Perlu PIN hapus</small></span></button>
     <button type="button" class="menuItem bahaya" id="btnTutupBuku" onclick="menuReset()">📕 <span>Reset (tutup buku)<small>Ganti pengurus. Perlu PIN reset 6 angka</small></span></button>
 
+    <button type="button" class="menuItem" onclick="menuTutorial()">📖 <span>Tutorial<small>Panduan cara memakai aplikasi</small></span></button>
+
     <div class="sbBawah">
+      <button type="button" class="menuItem hidden" id="btnLupaPin" onclick="lupakanPin()">🔒 <span>Lupakan PIN di perangkat ini<small>Saat masuk nanti harus mengetik PIN lagi</small></span></button>
       <button type="button" class="menuItem keluar" onclick="logout()">🚪 <span>Keluar<small>Kembali ke layar PIN</small></span></button>
       <div class="sbCatatan">Keuangan Wirausaha KIR TEI<br><b class="verApp"></b><br><span class="verKet"></span></div>
     </div>
@@ -668,6 +716,20 @@ input,textarea{font-size:16px}
   <div class="foot">Keuangan Wirausaha KIR TEI · <b class="verApp"></b><br><span class="verKet"></span></div>
 </div>
 
+<!-- TUTORIAL -->
+<div id="tutorScreen" class="hidden">
+  <div id="tutorPanel" role="dialog" aria-modal="true" aria-labelledby="tutorJudul">
+    <div class="tutorAtas"><span id="tutorHitung"></span><button type="button" id="tutorLewati">Lewati tutorial</button></div>
+    <h3 id="tutorJudul"></h3>
+    <div id="tutorIsi"></div>
+    <div id="tutorTitik" aria-hidden="true"></div>
+    <div class="tutorTombol">
+      <button type="button" class="btn abu" id="tutorKembali">Kembali</button>
+      <button type="button" class="btn" id="tutorLanjut">Lanjut</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="hidden"></div>
 
 <script>
@@ -681,10 +743,10 @@ const WAKTU_HAPUS = 10; // detik menunggu sebelum data benar-benar dihapus
 //   perubahan besar               -> naikkan VERSI_UTAMA, dua angka lain kembali ke 0    (3.10.0 -> 4.0.0)
 // Lalu isi VERSI_TGL dan tulis ringkas perubahannya di VERSI_KET.
 const VERSI_UTAMA = 3;
-const VERSI_FITUR = 9;
-const VERSI_PERBAIKAN = 4;
-const VERSI_TGL = '26 Nov 2026';
-const VERSI_KET = 'Dropdown kategori custom Android dan perbaikan keyboard';
+const VERSI_FITUR = 10;
+const VERSI_PERBAIKAN = 0;
+const VERSI_TGL = '28 Nov 2026';
+const VERSI_KET = 'Tutorial pengguna baru, ingat PIN di perangkat, perbaikan keyboard dan pilihan';
 const VERSI_NO = 'v' + VERSI_UTAMA + '.' + VERSI_FITUR + '.' + VERSI_PERBAIKAN; // contoh: v3.9.2
 const VERSI_APP = VERSI_NO + ' · ' + VERSI_TGL;
 
@@ -758,6 +820,7 @@ try { localStorage.removeItem('lastPj'); sessionStorage.removeItem('lastPj'); } 
 
 // ================== SIDEBAR ==================
 const bukaSidebar = () => {
+  $('btnLupaPin').classList.toggle('hidden', !bacaPinTersimpan());
   $('sidebar').classList.add('buka'); $('sidebar').setAttribute('aria-hidden', 'false');
   $('sidebarOverlay').classList.remove('hidden');
 };
@@ -768,6 +831,8 @@ const tutupSidebar = () => {
 const menuLaporan = () => { tutupSidebar(); bukaLaporan(); };
 const menuReset = () => { tutupSidebar(); bukaTutupBuku(); };
 const menuModal = () => { tutupSidebar(); bukaModalAwal(); };
+const menuTutorial = () => { tutupSidebar(); mulaiTutorial(); };
+const lupakanPin = () => { hapusPinLokal(); $('btnLupaPin').classList.add('hidden'); toast('PIN di perangkat ini sudah dihapus. Saat masuk nanti, ketik PIN lagi.'); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape') tutupSidebar(); });
 
 // ================== MASUK ==================
@@ -779,14 +844,56 @@ $('formLogin').addEventListener('submit', async (e) => {
   btn.disabled = true; btn.textContent = 'Memeriksa…'; err.style.display = 'none';
   try {
     const hasil = await kirimJSON({ action:'login', password:pin }, 30000);
-    if (hasil.status === 'success') { sessionStorage.setItem('isLoggedIn','true'); tampilkanAplikasi(); }
+    if (hasil.status === 'success') {
+      if ($('ingatPin').checked) simpanPinLokal(pin); else hapusPinLokal();
+      sessionStorage.setItem('isLoggedIn','true'); tampilkanAplikasi();
+    }
     else { err.textContent = 'PIN salah. Coba lagi.'; err.style.display = 'block'; }
   } catch (x) { err.textContent = 'Tidak bisa terhubung. Periksa internet Anda.'; err.style.display = 'block'; }
   finally { btn.disabled = false; btn.textContent = 'Masuk'; }
 });
 
-const tampilkanAplikasi = () => { $('loginScreen').classList.add('hidden'); $('appContent').classList.remove('hidden'); muatDataOnline(); };
-const logout = () => { sessionStorage.removeItem('isLoggedIn'); location.reload(); };
+const tampilkanAplikasi = () => {
+  $('loginScreen').classList.add('hidden'); $('appContent').classList.remove('hidden'); muatDataOnline();
+  setTimeout(cekTutorialPertama, 900); // pengguna baru: tampilkan tutorial sekali
+};
+// Keluar juga menghapus PIN yang tersimpan, supaya perangkat yang dipinjam tidak bisa masuk lagi.
+const logout = () => { sessionStorage.removeItem('isLoggedIn'); hapusPinLokal(); location.reload(); };
+
+// ---- PIN login tersimpan di perangkat (localStorage) ----
+// Catatan: PIN tersimpan apa adanya di perangkat ini. Siapa pun yang memegang HP yang sudah membuka aplikasi
+// bisa masuk tanpa mengetik PIN, sampai menekan Keluar atau "Lupakan PIN di perangkat ini" di menu samping.
+const KUNCI_PIN = 'pinMasuk';
+const bacaPinTersimpan = () => { try { const v = localStorage.getItem(KUNCI_PIN) || ''; return /^\d{4}$/.test(v) ? v : ''; } catch (x) { return ''; } };
+const simpanPinLokal = (pin) => { try { localStorage.setItem(KUNCI_PIN, pin); } catch (x) {} };
+const hapusPinLokal = () => { try { localStorage.removeItem(KUNCI_PIN); } catch (x) {} };
+
+const tampilFormLogin = (pesan) => {
+  $('loginAuto').classList.add('hidden'); $('formLogin').classList.remove('hidden');
+  const err = $('pesanError');
+  if (pesan) { err.textContent = pesan; err.style.display = 'block'; } else err.style.display = 'none';
+  const k = document.querySelectorAll('.log-pin'); k.forEach(b => b.value = ''); if (k[0]) k[0].focus();
+};
+const masukOtomatis = async () => {
+  const pin = bacaPinTersimpan();
+  if (!pin) return;
+  $('formLogin').classList.add('hidden'); $('loginAuto').classList.remove('hidden');
+  $('pesanError').style.display = 'none';
+  $('btnAutoUlang').classList.add('hidden'); $('btnAutoManual').classList.add('hidden');
+  $('loginAutoTeks').textContent = 'Memeriksa PIN yang tersimpan…';
+  try {
+    const hasil = await kirimJSON({ action:'login', password:pin }, 30000);
+    if (hasil.status === 'success') { sessionStorage.setItem('isLoggedIn','true'); tampilkanAplikasi(); return; }
+    hapusPinLokal(); // PIN sudah diganti di Sheet: buang yang lama
+    tampilFormLogin('PIN yang tersimpan sudah tidak berlaku. Ketik PIN yang baru.');
+  } catch (x) {
+    // Tidak ada internet: PIN tetap tersimpan, beri pilihan mencoba lagi
+    $('loginAutoTeks').textContent = 'Tidak bisa terhubung. Periksa internet Anda. PIN Anda tetap tersimpan.';
+    $('btnAutoUlang').classList.remove('hidden'); $('btnAutoManual').classList.remove('hidden');
+  }
+};
+$('btnAutoUlang').addEventListener('click', masukOtomatis);
+$('btnAutoManual').addEventListener('click', () => tampilFormLogin(''));
 
 // ================== DATA ==================
 let dataKeuangan = [];   // semua transaksi dari semua periode
@@ -852,11 +959,28 @@ const petaNamaPj = (daftarNama) => {
 };
 const namaGabung = (peta, n) => peta[tokenNama(n).join(' ')] || String(n || '').trim() || '(tanpa nama)';
 
+// Saran nama berupa tombol kecil di bawah kolom nama (bukan daftar bawaan browser).
+let daftarNamaPj = [];
 const isiDaftarPj = () => {
   const { peta } = petaNamaPj(dataKeuangan.map(namaPj));
-  const s = new Set(Object.values(peta));
-  $('daftarPj').innerHTML = [...s].map(n => `<option value="${esc(n)}">`).join('');
+  daftarNamaPj = [...new Set(Object.values(peta))].filter(n => n && n !== '(tanpa nama)').sort((a, b) => a.localeCompare(b, 'id'));
+  tampilSaranPj(false);
 };
+const tampilSaranPj = (tampil = true) => {
+  const box = $('saranPj'), q = $('pj').value.trim().toLowerCase();
+  const cocok = daftarNamaPj.filter(n => n.toLowerCase() !== q && (!q || n.toLowerCase().includes(q))).slice(0, 6);
+  box.innerHTML = cocok.map(n => `<button type="button" class="saranChip">${esc(n)}</button>`).join('');
+  box.classList.toggle('hidden', !tampil || !cocok.length);
+};
+$('pj').addEventListener('focus', () => tampilSaranPj(true));
+$('pj').addEventListener('input', () => tampilSaranPj(true));
+$('pj').addEventListener('blur', () => setTimeout(() => tampilSaranPj(false), 150));
+// mousedown/pointerdown dicegah agar kolom nama tidak kehilangan fokus (keyboard tidak berkedip)
+['mousedown', 'pointerdown'].forEach(ev => $('saranPj').addEventListener(ev, e => e.preventDefault()));
+$('saranPj').addEventListener('click', e => {
+  const b = e.target.closest('.saranChip'); if (!b) return;
+  $('pj').value = b.textContent; tampilSaranPj(false);
+});
 
 // ----- Periode kepengurusan -----
 const infoPeriode = (nama) => daftarPeriode.find(p => p.nama === nama) || null;
@@ -1731,6 +1855,7 @@ $('btnCetak').addEventListener('click', async () => {
   };
   const close = () => { overlay.classList.remove('buka'); activeSelect = null; };
   const open = (sel) => {
+    const f = document.activeElement; if (f && f !== document.body && f.blur) f.blur(); // tutup keyboard dulu
     activeSelect = sel;
     heading.textContent = labelFor(sel);
     list.replaceChildren();
@@ -1763,6 +1888,13 @@ $('btnCetak').addEventListener('click', async () => {
     trigger.addEventListener('click', () => open(sel));
     wrap.appendChild(trigger);
     sel.addEventListener('change', () => sync(sel));
+    // Label tombol harus ikut berubah saat nilai diubah lewat kode (isi ulang opsi, .value = ..., form.reset())
+    const dVal = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+    const dIdx = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex');
+    Object.defineProperty(sel, 'value', { configurable: true, get() { return dVal.get.call(this); }, set(v) { dVal.set.call(this, v); sync(this); } });
+    Object.defineProperty(sel, 'selectedIndex', { configurable: true, get() { return dIdx.get.call(this); }, set(v) { dIdx.set.call(this, v); sync(this); } });
+    new MutationObserver(() => sync(sel)).observe(sel, { childList: true, subtree: true });
+    if (sel.form) sel.form.addEventListener('reset', () => setTimeout(() => sync(sel), 0));
     sel.addEventListener('invalid', (e) => { e.preventDefault(); open(sel); });
     sync(sel);
   });
@@ -1771,48 +1903,56 @@ $('btnCetak').addEventListener('click', async () => {
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('buka')) close(); });
 })();
 
-// Android: sinkronkan layout dengan Visual Viewport saat keyboard muncul.
-// Hindari scrollIntoView smooth berulang karena dapat membuat modal meloncat/glitch.
+// Keyboard Android/iOS tanpa loncatan tampilan.
+// - Chrome Android (meta viewport interactive-widget=resizes-content): tinggi 100dvh ikut mengecil sendiri,
+//   jadi JS TIDAK menyetel tinggi apa pun (inilah yang dulu bentrok dan membuat modal meloncat).
+// - Browser yang tidak mengecilkan layout (mis. iOS Safari): tinggi mengikuti visual viewport.
+// - Status "keyboard terbuka" hanya mengikuti fokus ke kolom ketik, dengan jeda singkat sehingga
+//   perpindahan antar kotak PIN tidak membuat tampilan berkedip.
 (() => {
   const root = document.documentElement;
   const vv = window.visualViewport;
-  let resizeRaf = 0;
-  const ukurViewport = () => {
-    cancelAnimationFrame(resizeRaf);
-    resizeRaf = requestAnimationFrame(() => {
+  const kolomKetik = (el) => !!(el && el.matches && el.matches('input,textarea') &&
+    !['file', 'checkbox', 'radio', 'button', 'submit', 'range'].includes((el.type || '').toLowerCase()));
+  let raf = 0, terakhir = '';
+  const ukur = () => {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
       const tinggi = vv ? vv.height : window.innerHeight;
-      const atas = vv ? vv.offsetTop : 0;
-      root.style.setProperty('--tinggi-viewport', Math.max(240, tinggi) + 'px');
-      root.style.setProperty('--atas-viewport', Math.max(0, atas) + 'px');
-      const aktif = document.activeElement;
-      const sedangInput = aktif && /INPUT|SELECT|TEXTAREA/.test(aktif.tagName) &&
-        !['file','checkbox','radio','button','submit'].includes((aktif.type || '').toLowerCase());
-      const keyboardTerbuka = !!(sedangInput && window.innerHeight - tinggi > 120);
-      document.body.classList.toggle('keyboard-open', keyboardTerbuka);
+      const ikutVisual = window.innerHeight - tinggi > 80;
+      const nilai = ikutVisual ? Math.round(tinggi) + '|' + Math.round(vv.offsetTop) : '';
+      if (nilai === terakhir) return;
+      terakhir = nilai;
+      if (ikutVisual) {
+        root.style.setProperty('--tinggi-viewport', Math.max(240, tinggi) + 'px');
+        root.style.setProperty('--atas-viewport', Math.max(0, vv.offsetTop) + 'px');
+      } else {
+        root.style.removeProperty('--tinggi-viewport');
+        root.style.removeProperty('--atas-viewport');
+      }
     });
   };
-  if (vv) {
-    vv.addEventListener('resize', ukurViewport, {passive:true});
-    vv.addEventListener('scroll', ukurViewport, {passive:true});
-  }
-  window.addEventListener('resize', ukurViewport, {passive:true});
+  if (vv) { vv.addEventListener('resize', ukur, { passive: true }); vv.addEventListener('scroll', ukur, { passive: true }); }
+  window.addEventListener('resize', ukur, { passive: true });
+
+  let tunda = 0;
   document.addEventListener('focusin', (e) => {
+    if (kolomKetik(e.target)) { clearTimeout(tunda); document.body.classList.add('keyboard-open'); }
     if (!e.target.matches || !e.target.matches('input,select,textarea')) return;
-    ukurViewport();
-    // Tunggu keyboard selesai mengubah viewport, lalu geser hanya bila field terpotong.
+    // Setelah keyboard selesai naik, geser hanya bila kolom masih terpotong
     setTimeout(() => {
       const el = e.target;
-      if (!el.isConnected) return;
+      if (!el.isConnected || document.activeElement !== el) return;
       const r = el.getBoundingClientRect();
       const h = vv ? vv.height : window.innerHeight;
-      if (r.bottom > h - 18 || r.top < 8) {
-        el.scrollIntoView({block:'nearest', inline:'nearest', behavior:'auto'});
-      }
-      ukurViewport();
-    }, 260);
+      if (r.bottom > h - 12 || r.top < 8) el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
+    }, 320);
   });
-  document.addEventListener('focusout', () => setTimeout(ukurViewport, 180));
-  ukurViewport();
+  document.addEventListener('focusout', () => {
+    clearTimeout(tunda);
+    tunda = setTimeout(() => document.body.classList.toggle('keyboard-open', kolomKetik(document.activeElement)), 140);
+  });
+  ukur();
 })();
 
 // Cegah browser mengubah posisi scroll otomatis
@@ -1860,6 +2000,7 @@ window.addEventListener('scroll', () => {
 
     // Tutup layar/modal yang sedang terbuka.
     const daftarModal = [
+      ['tutorScreen', selesaiTutor],
       ['fotoScreen', tutupFoto],
       ['formScreen', tutupForm],
       ['deleteScreen', tutupModalHapus],
@@ -1879,9 +2020,82 @@ window.addEventListener('scroll', () => {
     // Jika tidak ada modal, tombol Back kembali ke halaman sebelumnya.
   });
 })();
-</script>
 
+// ================== TUTORIAL ==================
+const KUNCI_TUTOR = 'tutorialSelesai';
+const LANGKAH_TUTOR = [
+  { j: 'Selamat datang 👋',
+    i: 'Aplikasi ini mencatat <b>uang masuk</b> dan <b>uang keluar</b> kas ekstrakurikuler, lengkap dengan <b>foto bukti</b>, lalu menyiapkan <b>laporan siap cetak</b>. Tutorial singkat ini sekitar 1 menit.' },
+  { j: 'Saldo kas', t: '.card.saldo',
+    i: 'Di sini terlihat <b>uang kas saat ini</b>, total uang masuk, dan total uang keluar untuk periode kepengurusan yang sedang aktif.' },
+  { j: 'Catat uang masuk / keluar', t: '#barAksi',
+    i: 'Tekan <b>+ Uang masuk</b> bila kas menerima uang (misalnya setoran harian). Tekan <b>− Uang keluar</b> bila kas dipakai (misalnya belanja).' },
+  { j: 'Isi data dengan benar',
+    i: 'Setiap catatan perlu: <b>jumlah</b>, <b>kategori</b>, <b>tanggal</b>, <b>foto bukti</b> (nota atau kegiatan, wajib), dan <b>nama penanggung jawab</b>.<div class="contohNama"><b>Nama harus nama asli sesuai ID card</b> (KTP / kartu pelajar).<br>✅ Benar: <b>Budi Santoso</b><br>❌ Salah: Budi, bud, BS</div>' },
+  { j: 'Ringkasan dan riwayat', t: '.cari',
+    i: 'Cari transaksi lewat kata kunci, kategori, atau nama. Pilih <b>2 bulan</b> atau <b>3 bulan</b> untuk mencari di bulan sebelumnya sekaligus. Ketuk foto kecil untuk memperbesar. Tombol <b>Hapus</b> memerlukan PIN hapus dan alasan.' },
+  { j: 'Menu samping', t: '#btnMenu',
+    i: 'Tombol <b>☰</b> di kiri atas membuka menu samping. Kita lihat isinya.' },
+  { j: 'Periode kepengurusan', sidebar: true, t: '#sidebar .sbPeriode',
+    i: 'Pilih periode kepengurusan di sini. Arsip pengurus lama bisa <b>dilihat dan dicetak</b>, tetapi tidak bisa diubah.' },
+  { j: 'Cetak laporan', sidebar: true, t: '#sidebar [onclick="menuLaporan()"]',
+    i: 'Buat laporan <b>mingguan</b>, <b>bulanan</b>, atau <b>seluruh bulan satu periode</b>. Isi catatan kendala dan nama pembina, ketua, serta penanggung jawab, lalu tekan <b>Cetak / Simpan PDF</b>.' },
+  { j: 'Modal awal dan reset', sidebar: true, t: '#btnMenuModal',
+    i: '<b>Atur modal awal</b> untuk uang kas di awal periode (perlu PIN hapus). <b>Reset (tutup buku)</b> dipakai saat ganti pengurus: perlu PIN reset 6 angka, dan data lama menjadi arsip, tidak dihapus.' },
+  { j: 'Lupa cara pakainya?', sidebar: true, t: '#sidebar [onclick="menuTutorial()"]',
+    i: 'Tombol <b>📖 Tutorial</b> ini membuka panduan lagi kapan saja. Tombol <b>Keluar</b> juga menghapus PIN yang tersimpan di perangkat ini. Selamat mencatat!' }
+];
+let tutorNo = 0;
+const tutorBersih = () => document.querySelectorAll('.tutorSorot').forEach(e => e.classList.remove('tutorSorot'));
+const tutorTampil = () => {
+  const L = LANGKAH_TUTOR[tutorNo], akhir = tutorNo === LANGKAH_TUTOR.length - 1;
+  tutorBersih();
+  if (L.sidebar) bukaSidebar(); else tutupSidebar();
+  $('tutorJudul').textContent = L.j;
+  $('tutorIsi').innerHTML = L.i;
+  $('tutorHitung').textContent = 'Langkah ' + (tutorNo + 1) + ' dari ' + LANGKAH_TUTOR.length;
+  $('tutorTitik').innerHTML = LANGKAH_TUTOR.map((_, k) => '<i class="' + (k === tutorNo ? 'on' : '') + '"></i>').join('');
+  $('tutorKembali').style.visibility = tutorNo === 0 ? 'hidden' : 'visible';
+  $('tutorLanjut').textContent = akhir ? 'Selesai' : 'Lanjut';
+  $('tutorLewati').classList.toggle('hidden', akhir);
+  const panel = $('tutorPanel'); panel.classList.remove('atas');
+  const el = L.t ? document.querySelector(L.t) : null;
+  const letak = () => {
+    if (!el || !el.getClientRects().length) return;
+    el.classList.add('tutorSorot');
+    const r = el.getBoundingClientRect();
+    panel.classList.toggle('atas', r.top + r.height / 2 > window.innerHeight * 0.5);
+  };
+  if (el && !L.sidebar) { el.scrollIntoView({ block: 'center', behavior: 'auto' }); setTimeout(letak, 60); }
+  else if (el) setTimeout(letak, 280); // tunggu sidebar selesai bergeser
+  panel.scrollTop = 0;
+};
+const mulaiTutorial = () => {
+  tutorNo = 0;
+  $('tutorScreen').classList.remove('hidden');
+  tutorTampil();
+};
+const selesaiTutor = () => {
+  $('tutorScreen').classList.add('hidden');
+  tutorBersih(); tutupSidebar();
+  try { localStorage.setItem(KUNCI_TUTOR, '1'); } catch (x) {}
+  window.scrollTo(0, 0);
+};
+// Hanya untuk pengguna yang belum pernah melihat tutorial (dan penyimpanan perangkat berfungsi)
+const cekTutorialPertama = () => {
+  try { if (localStorage.getItem(KUNCI_TUTOR) === '1') return; localStorage.setItem('cobaSimpan', '1'); localStorage.removeItem('cobaSimpan'); }
+  catch (x) { return; }
+  if (!$('tutorScreen').classList.contains('hidden')) return;
+  mulaiTutorial();
+};
+$('tutorLanjut').addEventListener('click', () => { if (tutorNo >= LANGKAH_TUTOR.length - 1) selesaiTutor(); else { tutorNo++; tutorTampil(); } });
+$('tutorKembali').addEventListener('click', () => { if (tutorNo > 0) { tutorNo--; tutorTampil(); } });
+$('tutorLewati').addEventListener('click', selesaiTutor);
+
+// ================== MULAI ==================
+// (Dulu bagian ini berada di luar tag script sehingga tidak pernah berjalan dan teksnya tampil di halaman.)
 if (sessionStorage.getItem('isLoggedIn') === 'true') tampilkanAplikasi();
+else masukOtomatis();
 </script>
 </body>
 </html>
